@@ -9,12 +9,13 @@ import (
 )
 
 const (
-	DefaultClientId = "robocar-frame-display"
+	DefaultClientId = "robocar-display"
 )
 
 func main() {
 	var mqttBroker, username, password, clientId string
-	var frameTopic string
+	var frameTopic, objectsTopic string
+	var withObjects bool
 
 	mqttQos := cli.InitIntFlag("MQTT_QOS", 0)
 	_, mqttRetain := os.LookupEnv("MQTT_RETAIN")
@@ -22,6 +23,8 @@ func main() {
 	cli.InitMqttFlags(DefaultClientId, &mqttBroker, &username, &password, &clientId, &mqttQos, &mqttRetain)
 
 	flag.StringVar(&frameTopic, "mqtt-topic-frame", os.Getenv("MQTT_TOPIC_FRAME"), "Mqtt topic that contains frame to display, use MQTT_TOPIC_FRAME if args not set")
+	flag.StringVar(&objectsTopic, "mqtt-topic-objects", os.Getenv("MQTT_TOPIC_OBJECTS"), "Mqtt topic that contains detected objects, use MQTT_TOPIC_OBJECTS if args not set")
+	flag.BoolVar(&withObjects, "with-objects", false, "Display detected objects")
 
 	flag.Parse()
 	if len(os.Args) <= 1 {
@@ -35,7 +38,7 @@ func main() {
 	}
 	defer client.Disconnect(50)
 
-	p := part.NewPart(client, frameTopic)
+	p := part.NewPart(client, frameTopic, objectsTopic, withObjects)
 	defer p.Stop()
 
 	cli.HandleExit(p)
