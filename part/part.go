@@ -12,15 +12,18 @@ import (
 	"image/color"
 )
 
-func NewPart(client mqtt.Client, frameTopic, objectsTopic string, withObjects bool) *FramePart {
+func NewPart(client mqtt.Client, frameTopic, objectsTopic, roadTopic string, withObjects, withRoad bool) *FramePart {
 	return &FramePart{
 		client:       client,
 		frameTopic:   frameTopic,
 		objectsTopic: objectsTopic,
+		roadTopic:    roadTopic,
 		window:       gocv.NewWindow(frameTopic),
 		withObjects:  withObjects,
+		withRoad:     withRoad,
 		imgChan:      make(chan gocv.Mat),
 		objectsChan:  make(chan events.ObjectsMessage),
+		roadChan:     make(chan events.RoadMessage),
 		cancel:       make(chan interface{}),
 	}
 
@@ -28,13 +31,15 @@ func NewPart(client mqtt.Client, frameTopic, objectsTopic string, withObjects bo
 
 type FramePart struct {
 	client                   mqtt.Client
-	frameTopic, objectsTopic string
+	frameTopic, objectsTopic, roadTopic string
 
 	window      *gocv.Window
 	withObjects bool
+	withRoad    bool
 
 	imgChan     chan gocv.Mat
 	objectsChan chan events.ObjectsMessage
+	roadChan    chan events.RoadMessage
 	cancel      chan interface{}
 }
 
@@ -45,6 +50,8 @@ func (p *FramePart) Start() error {
 
 	var img = gocv.NewMat()
 	var objectsMsg events.ObjectsMessage
+	var roadMsg events.RoadMessage
+
 	for {
 		select {
 		case newImg := <-p.imgChan:
@@ -52,11 +59,13 @@ func (p *FramePart) Start() error {
 			img = newImg
 		case objects := <-p.objectsChan:
 			objectsMsg = objects
+		case road := <-p.roadChan:
+			roadMsg = road
 		case <-p.cancel:
 			img.Close()
 			return nil
 		}
-		p.drawFrame(&img, &objectsMsg)
+		p.drawFrame(&img, &objectsMsg, &roadMsg)
 	}
 }
 
@@ -65,7 +74,7 @@ func (p *FramePart) Stop() {
 
 	close(p.cancel)
 
-	StopService("frame-display", p.client, p.frameTopic)
+	StopService("frame-display", p.client, p.frameTopic, p.roadTopic)
 }
 
 func (p *FramePart) onFrame(_ mqtt.Client, message mqtt.Message) {
@@ -86,15 +95,27 @@ func (p *FramePart) onFrame(_ mqtt.Client, message mqtt.Message) {
 }
 
 func (p *FramePart) onObjects(_ mqtt.Client, message mqtt.Message) {
-	var objectsMsg events.ObjectsMessage
+	var msg events.ObjectsMessage
 
-	err := proto.Unmarshal(message.Payload(), &objectsMsg)
+	err := proto.Unmarshal(message.Payload(), &msg)
 	if err != nil {
-		log.Errorf("unable to unmarshal detected objects: %v", err)
+		log.Errorf("unable to unmarshal msg %T: %v", msg, err)
 		return
 	}
 
-	p.objectsChan <- objectsMsg
+	p.objectsChan <- msg
+}
+
+func (p *FramePart) onRoad(_ mqtt.Client, message mqtt.Message) {
+	var msg events.RoadMessage
+
+	err := proto.Unmarshal(message.Payload(), &msg)
+	if err != nil {
+		log.Errorf("unable to unmarshal msg %T: %v", msg, err)
+		return
+	}
+
+	p.roadChan <- msg
 }
 
 func (p *FramePart) registerCallbacks() error {
@@ -110,13 +131,22 @@ func (p *FramePart) registerCallbacks() error {
 		}
 	}
 
+	if p.withRoad {
+		err := service.RegisterCallback(p.client, p.roadTopic, p.onRoad)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
-func (p *FramePart) drawFrame(img *gocv.Mat, objects *events.ObjectsMessage) {
+func (p *FramePart) drawFrame(img *gocv.Mat, objects *events.ObjectsMessage, road *events.RoadMessage) {
 
 	if p.withObjects {
 		p.drawObjects(img, objects)
+	}
+	if p.withRoad {
+		p.drawRoad(img, road)
 	}
 
 	p.window.IMShow(*img)
@@ -131,6 +161,20 @@ func (p *FramePart) drawObjects(img *gocv.Mat, objects *events.ObjectsMessage) {
 			color.RGBA{0, 255, 0, 0},
 			2)
 	}
+}
+
+func (p *FramePart) drawRoad(img *gocv.Mat, road *events.RoadMessage) {
+	cntr := make([]image.Point, 0, len(road.GetContour()))
+	for _, pt := range road.GetContour() {
+		cntr = append(cntr, image.Point{X: int(pt.GetX()), Y: int(pt.GetY())})
+	}
+
+	gocv.DrawContours(
+		img,
+		[][]image.Point{cntr},
+		0,
+		color.RGBA{R: 255, G: 0, B: 0, A: 128,},
+		-1)
 }
 
 func StopService(name string, client mqtt.Client, topics ...string) {

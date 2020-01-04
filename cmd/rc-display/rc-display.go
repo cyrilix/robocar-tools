@@ -14,8 +14,8 @@ const (
 
 func main() {
 	var mqttBroker, username, password, clientId string
-	var frameTopic, objectsTopic string
-	var withObjects bool
+	var frameTopic, objectsTopic, roadTopic string
+	var withObjects, withRoad bool
 
 	mqttQos := cli.InitIntFlag("MQTT_QOS", 0)
 	_, mqttRetain := os.LookupEnv("MQTT_RETAIN")
@@ -23,8 +23,12 @@ func main() {
 	cli.InitMqttFlags(DefaultClientId, &mqttBroker, &username, &password, &clientId, &mqttQos, &mqttRetain)
 
 	flag.StringVar(&frameTopic, "mqtt-topic-frame", os.Getenv("MQTT_TOPIC_FRAME"), "Mqtt topic that contains frame to display, use MQTT_TOPIC_FRAME if args not set")
+
 	flag.StringVar(&objectsTopic, "mqtt-topic-objects", os.Getenv("MQTT_TOPIC_OBJECTS"), "Mqtt topic that contains detected objects, use MQTT_TOPIC_OBJECTS if args not set")
 	flag.BoolVar(&withObjects, "with-objects", false, "Display detected objects")
+
+	flag.StringVar(&roadTopic, "mqtt-topic-road", os.Getenv("MQTT_TOPIC_ROAD"), "Mqtt topic that contains road description, use MQTT_TOPIC_ROAD if args not set")
+	flag.BoolVar(&withRoad, "with-road", false, "Display detected road")
 
 	flag.Parse()
 	if len(os.Args) <= 1 {
@@ -38,7 +42,9 @@ func main() {
 	}
 	defer client.Disconnect(50)
 
-	p := part.NewPart(client, frameTopic, objectsTopic, withObjects)
+	p := part.NewPart(client, frameTopic,
+		objectsTopic, roadTopic,
+		withObjects, withRoad )
 	defer p.Stop()
 
 	cli.HandleExit(p)

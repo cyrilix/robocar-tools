@@ -9,7 +9,7 @@ Tool to display camera frame and metrics
   -mqtt-broker string
         Broker Uri, use MQTT_BROKER env if arg not set (default "tcp://127.0.0.1:1883")
   -mqtt-client-id string
-        Mqtt client id, use MQTT_CLIENT_ID env if args not set (default "robocar-frame-display")
+        Mqtt client id, use MQTT_CLIENT_ID env if args not set (default "robocar-display")
   -mqtt-password string
         Broker Password, MQTT_PASSWORD env if args not set
   -mqtt-qos int
@@ -18,7 +18,15 @@ Tool to display camera frame and metrics
         Retain mqtt message, if not set, true if MQTT_RETAIN env variable is set
   -mqtt-topic-frame string
         Mqtt topic that contains frame to display, use MQTT_TOPIC_FRAME if args not set
+  -mqtt-topic-objects string
+        Mqtt topic that contains detected objects, use MQTT_TOPIC_OBJECTS if args not set
+  -mqtt-topic-road string
+        Mqtt topic that contains road description, use MQTT_TOPIC_ROAD if args not set
   -mqtt-username string
         Broker Username, use MQTT_USERNAME env if arg not set
+  -with-objects
+        Display detected objects
+  -with-road
+        Display detected road
 ```
 
