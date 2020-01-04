@@ -1,10 +1,8 @@
 package part
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/cyrilix/robocar-base/service"
-	"github.com/cyrilix/robocar-base/types"
 	"github.com/cyrilix/robocar-protobuf/go/events"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/golang/protobuf/proto"
@@ -22,7 +20,7 @@ func NewPart(client mqtt.Client, frameTopic, objectsTopic string, withObjects bo
 		window:       gocv.NewWindow(frameTopic),
 		withObjects:  withObjects,
 		imgChan:      make(chan gocv.Mat),
-		objectsChan:  make(chan []types.BoundingBox),
+		objectsChan:  make(chan events.ObjectsMessage),
 		cancel:       make(chan interface{}),
 	}
 
@@ -36,7 +34,7 @@ type FramePart struct {
 	withObjects bool
 
 	imgChan     chan gocv.Mat
-	objectsChan chan []types.BoundingBox
+	objectsChan chan events.ObjectsMessage
 	cancel      chan interface{}
 }
 
@@ -46,18 +44,19 @@ func (p *FramePart) Start() error {
 	}
 
 	var img = gocv.NewMat()
-	var objects = make([]types.BoundingBox, 0, 5)
+	var objectsMsg events.ObjectsMessage
 	for {
 		select {
 		case newImg := <-p.imgChan:
 			img.Close()
 			img = newImg
-		case objects = <-p.objectsChan:
+		case objects := <-p.objectsChan:
+			objectsMsg = objects
 		case <-p.cancel:
 			img.Close()
 			return nil
 		}
-		p.drawFrame(&img, &objects)
+		p.drawFrame(&img, &objectsMsg)
 	}
 }
 
@@ -87,15 +86,15 @@ func (p *FramePart) onFrame(_ mqtt.Client, message mqtt.Message) {
 }
 
 func (p *FramePart) onObjects(_ mqtt.Client, message mqtt.Message) {
-	var objects []types.BoundingBox
+	var objectsMsg events.ObjectsMessage
 
-	err := json.Unmarshal(message.Payload(), &objects)
+	err := proto.Unmarshal(message.Payload(), &objectsMsg)
 	if err != nil {
 		log.Errorf("unable to unmarshal detected objects: %v", err)
 		return
 	}
 
-	p.objectsChan <- objects
+	p.objectsChan <- objectsMsg
 }
 
 func (p *FramePart) registerCallbacks() error {
@@ -114,7 +113,7 @@ func (p *FramePart) registerCallbacks() error {
 	return nil
 }
 
-func (p *FramePart) drawFrame(img *gocv.Mat, objects *[]types.BoundingBox) {
+func (p *FramePart) drawFrame(img *gocv.Mat, objects *events.ObjectsMessage) {
 
 	if p.withObjects {
 		p.drawObjects(img, objects)
@@ -124,9 +123,13 @@ func (p *FramePart) drawFrame(img *gocv.Mat, objects *[]types.BoundingBox) {
 	p.window.WaitKey(1)
 }
 
-func (p *FramePart) drawObjects(img *gocv.Mat, objects *[]types.BoundingBox) {
-	for _, bb := range *objects {
-		gocv.Rectangle(img, image.Rect(bb.Left, bb.Top, bb.Right, bb.Bottom), color.RGBA{0, 255, 0, 0}, 2)
+func (p *FramePart) drawObjects(img *gocv.Mat, objects *events.ObjectsMessage) {
+	for _, obj := range objects.GetObjects() {
+		gocv.Rectangle(
+			img,
+			image.Rect(int(obj.GetLeft()), int(obj.GetTop()), int(obj.GetRight()), int(obj.GetBottom())),
+			color.RGBA{0, 255, 0, 0},
+			2)
 	}
 }
 
