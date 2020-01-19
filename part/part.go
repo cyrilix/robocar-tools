@@ -30,7 +30,7 @@ func NewPart(client mqtt.Client, frameTopic, objectsTopic, roadTopic string, wit
 }
 
 type FramePart struct {
-	client                   mqtt.Client
+	client                              mqtt.Client
 	frameTopic, objectsTopic, roadTopic string
 
 	window      *gocv.Window
@@ -165,6 +165,9 @@ func (p *FramePart) drawObjects(img *gocv.Mat, objects *events.ObjectsMessage) {
 
 func (p *FramePart) drawRoad(img *gocv.Mat, road *events.RoadMessage) {
 	cntr := make([]image.Point, 0, len(road.GetContour()))
+	if road.GetContour() == nil || len(road.GetContour()) < 3 {
+		return
+	}
 	for _, pt := range road.GetContour() {
 		cntr = append(cntr, image.Point{X: int(pt.GetX()), Y: int(pt.GetY())})
 	}
@@ -175,6 +178,7 @@ func (p *FramePart) drawRoad(img *gocv.Mat, road *events.RoadMessage) {
 		0,
 		color.RGBA{R: 255, G: 0, B: 0, A: 128,},
 		-1)
+
 }
 
 func StopService(name string, client mqtt.Client, topics ...string) {
