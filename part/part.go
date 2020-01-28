@@ -176,7 +176,7 @@ func (p *FramePart) drawRoad(img *gocv.Mat, road *events.RoadMessage) {
 		img,
 		[][]image.Point{cntr},
 		0,
-		color.RGBA{R: 255, G: 0, B: 0, A: 128,},
+		color.RGBA{R: 255, G: 0, B: 0, A: 128},
 		-1)
 
 }
