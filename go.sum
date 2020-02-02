@@ -7,8 +7,8 @@ github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDk
 github.com/containerd/continuity v0.0.0-20190426062206-aaeac12a7ffc/go.mod h1:GL3xCUCBDV3CZiTSEKksMWbLE66hEyuu9qyDOOqM47Y=
 github.com/cyrilix/robocar-base v0.0.0-20200128185221-fee4454c12c7 h1:L7eLJDN59NALVN36Y/9Akt1BI0RfY7f1MqHQmR2yRKA=
 github.com/cyrilix/robocar-base v0.0.0-20200128185221-fee4454c12c7/go.mod h1:jRQ+lJAHKkdcjwS5vt2t5LX2zM+bxX+gKffixkc2lbA=
-github.com/cyrilix/robocar-protobuf/go v0.0.0-20200125171436-7bf31bd564b8 h1:8q1eiK2ii5IaztZUvW/rCaZoQMXqFR+EOP+8vUEAIgk=
-github.com/cyrilix/robocar-protobuf/go v0.0.0-20200125171436-7bf31bd564b8/go.mod h1:I+i6Ujns+4DmRmmUej56MItlmT4K2zlMZ35vZrHEfQ4=
+github.com/cyrilix/robocar-protobuf/go v0.0.0-20200202123632-eda50f0cce3b h1:HUFFtldNiyl5uHq2W2mkO7MecfgTTHi+IzdAZmr92jQ=
+github.com/cyrilix/robocar-protobuf/go v0.0.0-20200202123632-eda50f0cce3b/go.mod h1:I+i6Ujns+4DmRmmUej56MItlmT4K2zlMZ35vZrHEfQ4=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible/go.mod h1:J2gT2udsDAN96Uj4KfcMRqY0/ypR+oyYUYmja8H+y+w=
 github.com/docker/docker v0.7.3-0.20190506211059-b20a14b54661/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
@@ -23,6 +23,8 @@ github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfU
 github.com/golang/mock v1.1.1/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/protobuf v1.3.2/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
+github.com/golang/protobuf v1.3.3 h1:gyjaxf+svBWX08ZjK86iN9geUJF0H6gp2IRKX6Nf6/I=
+github.com/golang/protobuf v1.3.3/go.mod h1:vzj43D7+SQXF/4pzW/hwtAqwc6iTitCiVSaWz5lYuqw=
 github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
 github.com/gorilla/context v1.1.1/go.mod h1:kBGZzfjB9CEq2AlWe17Uuf7NDRt0dE0s8S51q0aT7Yg=
 github.com/gorilla/mux v1.6.2/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2zaAs=

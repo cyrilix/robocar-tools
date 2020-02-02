@@ -9,6 +9,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
+	"os"
 )
 
 func New(client mqtt.Client, jsonDir, imgDir string, recordTopic string) *Recorder {
@@ -51,7 +52,8 @@ func (r *Recorder) onRecordMsg(_ mqtt.Client, message mqtt.Message) {
 		return
 	}
 
-	imgName := fmt.Sprintf("cam-image_array_%s.jpg", msg.GetFrame().GetId().GetId())
+	os.MkdirAll()
+	imgName := fmt.Sprintf("%s/%s/cam-image_array_%s.jpg", r.imgDir, msg.GetRecordSet(), msg.GetFrame().GetId().GetId())
 	err = ioutil.WriteFile(imgName, msg.GetFrame().GetFrame(), 0755)
 	if err != nil {
 		log.Errorf("unable to write json file %v: %v", imgName, err)
