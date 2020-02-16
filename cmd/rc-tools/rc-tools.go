@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/cyrilix/robocar-base/cli"
+	"github.com/cyrilix/robocar-tools/data"
 	"github.com/cyrilix/robocar-tools/part"
 	"github.com/cyrilix/robocar-tools/record"
 	"github.com/cyrilix/robocar-tools/video"
@@ -14,6 +15,7 @@ import (
 
 const (
 	DefaultClientId = "robocar-tools"
+	DefaultTrainSliceSize = 0
 )
 
 func main() {
@@ -22,7 +24,9 @@ func main() {
 	var fps int
 	var frameTopic, objectsTopic, roadTopic, recordTopic string
 	var withObjects, withRoad bool
-	var jsonPath, imgPath string
+	var recordsPath string
+	var trainArchiveName string
+	var trainSliceSize int
 
 	mqttQos := cli.InitIntFlag("MQTT_QOS", 0)
 	_, mqttRetain := os.LookupEnv("MQTT_RETAIN")
@@ -31,6 +35,7 @@ func main() {
 		fmt.Printf("Usage of %s:\n", os.Args[0])
 		fmt.Printf("  display\n  \tDisplay events on live frames\n")
 		fmt.Printf("  record \n  \tRecord event for tensorflow training\n")
+		fmt.Printf("  train-archive \n  \tGenerate zip archive for training \n")
 	}
 
 	displayFlags := flag.NewFlagSet("display", flag.ExitOnError)
@@ -48,8 +53,16 @@ func main() {
 	recordFlags := flag.NewFlagSet("record", flag.ExitOnError)
 	cli.InitMqttFlagSet(recordFlags, DefaultClientId, &mqttBroker, &username, &password, &clientId, &mqttQos, &mqttRetain)
 	recordFlags.StringVar(&recordTopic, "mqtt-topic-records", os.Getenv("MQTT_TOPIC_RECORDS"), "Mqtt topic that contains record data for training, use MQTT_TOPIC_RECORDS if args not set")
-	recordFlags.StringVar(&jsonPath, "record-json-path", os.Getenv("RECORD_JSON_PATH"), "Path where to write json files, use RECORD_JSON_PATH if args not set")
-	recordFlags.StringVar(&imgPath, "record-image-path", os.Getenv("RECORD_IMAGE_PATH"), "Path where to write jpeg files, use RECORD_IMAGE_PATH if args not set")
+	recordFlags.StringVar(&recordsPath, "record-path", os.Getenv("RECORD_PATH"), "Path where to write records files, use RECORD_PATH if args not set")
+
+	trainArchiveFlags := flag.NewFlagSet("train-archive", flag.ExitOnError)
+	err := cli.SetIntDefaultValueFromEnv(&trainSliceSize, "TRAIN_SLICE_SIZE", DefaultTrainSliceSize)
+	if err != nil {
+		log.Printf("unable to parse horizon value arg: %v", err)
+	}
+	trainArchiveFlags.StringVar(&recordsPath, "record-path", os.Getenv("RECORD_PATH"), "Path where records files are stored, use RECORD_PATH if args not set")
+	trainArchiveFlags.StringVar(&trainArchiveName, "output", os.Getenv("TRAIN_ARCHIVE_NAME"), "Zip archive file name, use TRAIN_ARCHIVE_NAME if args not set")
+	trainArchiveFlags.IntVar(&trainSliceSize, "slice-size", trainSliceSize, "Number of record to shift with image, use TRAIN_SLICE_SIZE if args not set")
 
 	flag.Parse()
 
@@ -79,32 +92,41 @@ func main() {
 			log.Fatalf("unable to connect to mqtt bus: %v", err)
 		}
 		defer client.Disconnect(50)
-		runRecord(client, jsonPath, imgPath, recordTopic)
+		runRecord(client, recordsPath, recordTopic)
+	case trainArchiveFlags.Name():
+		if err := trainArchiveFlags.Parse(os.Args[2:]); err == flag.ErrHelp {
+			trainArchiveFlags.PrintDefaults()
+			os.Exit(0)
+		}
+		runTrainArchive(recordsPath, trainArchiveName, 2)
 	default:
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-	cmd := flag.Arg(1)
-	switch cmd {
-	case "display":
-	case "record":
-	default:
-		log.Errorf("invalid command: %v", cmd)
-	}
-
 }
 
-func runRecord(client mqtt.Client, jsonDir, imgDir string, recordTopic string) {
+func runRecord(client mqtt.Client, recordsDir, recordTopic string) {
 
-	r := record.New(client, jsonDir, imgDir, recordTopic)
+	r, err := record.New(client, recordsDir, recordTopic)
+	if err != nil {
+		log.Fatalf("unable to init record part: %v", err)
+	}
 	defer r.Stop()
 
 	cli.HandleExit(r)
 
-	err := r.Start()
+	err = r.Start()
 	if err != nil {
 		log.Fatalf("unable to start service: %v", err)
+	}
+}
+
+func runTrainArchive(basedir, archiveName string, sliceSize int) {
+
+	err := data.BuildArchive(basedir, archiveName, sliceSize)
+	if err != nil {
+		log.Fatalf("unable to build archive file %v: %v", archiveName, err)
 	}
 }
 
