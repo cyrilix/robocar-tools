@@ -6,10 +6,11 @@ import (
 	"github.com/cyrilix/robocar-protobuf/go/events"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/golang/protobuf/proto"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"gocv.io/x/gocv"
 	"image"
 	"image/color"
+	"log"
 )
 
 func NewPart(client mqtt.Client, frameTopic, objectsTopic, roadTopic string, withObjects, withRoad bool) *FramePart {
@@ -18,7 +19,7 @@ func NewPart(client mqtt.Client, frameTopic, objectsTopic, roadTopic string, wit
 		frameTopic:   frameTopic,
 		objectsTopic: objectsTopic,
 		roadTopic:    roadTopic,
-		window:       gocv.NewWindow(frameTopic),
+		window:       gocv.NewWindow("frameTopic"),
 		withObjects:  withObjects,
 		withRoad:     withRoad,
 		imgChan:      make(chan gocv.Mat),
@@ -81,16 +82,17 @@ func (p *FramePart) onFrame(_ mqtt.Client, message mqtt.Message) {
 	var msg events.FrameMessage
 	err := proto.Unmarshal(message.Payload(), &msg)
 	if err != nil {
-		log.Errorf("unable to unmarshal protobuf FrameMessage: %v", err)
+		zap.S().Errorf("unable to unmarshal protobuf FrameMessage: %v", err)
 		return
 	}
 
+	zap.S().Infow("new frame", zap.String("topic", message.Topic()), zap.String("frameId", msg.GetId().GetId()))
+
 	img, err := gocv.IMDecode(msg.Frame, gocv.IMReadUnchanged)
 	if err != nil {
-		log.Errorf("unable to decode image: %v", err)
+		zap.S().Errorf("unable to decode image: %v", err)
 		return
 	}
-	log.Infof("[%v] frame %v", message.Topic(), msg.GetId())
 	p.imgChan <- img
 }
 
@@ -99,7 +101,7 @@ func (p *FramePart) onObjects(_ mqtt.Client, message mqtt.Message) {
 
 	err := proto.Unmarshal(message.Payload(), &msg)
 	if err != nil {
-		log.Errorf("unable to unmarshal msg %T: %v", msg, err)
+		zap.S().Errorf("unable to unmarshal msg %T: %v", msg, err)
 		return
 	}
 
@@ -111,7 +113,7 @@ func (p *FramePart) onRoad(_ mqtt.Client, message mqtt.Message) {
 
 	err := proto.Unmarshal(message.Payload(), &msg)
 	if err != nil {
-		log.Errorf("unable to unmarshal msg %T: %v", msg, err)
+		zap.S().Errorf("unable to unmarshal msg %T: %v", msg, err)
 		return
 	}
 
@@ -182,11 +184,11 @@ func (p *FramePart) drawRoad(img *gocv.Mat, road *events.RoadMessage) {
 }
 
 func StopService(name string, client mqtt.Client, topics ...string) {
-	log.Printf("Stop %s service", name)
+	zap.S().Infof("Stop %s service", name)
 	token := client.Unsubscribe(topics...)
 	token.Wait()
 	if token.Error() != nil {
-		log.Printf("unable to unsubscribe service: %v", token.Error())
+		zap.S().Errorf("unable to unsubscribe service: %v", token.Error())
 	}
 	client.Disconnect(50)
 }
