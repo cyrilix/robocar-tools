@@ -10,7 +10,7 @@ import (
 	"github.com/cyrilix/robocar-tools/pkg/awsutils"
 	"github.com/cyrilix/robocar-tools/pkg/data"
 	"github.com/cyrilix/robocar-tools/pkg/models"
-	"log"
+	"go.uber.org/zap"
 	"strconv"
 	"time"
 )
@@ -36,18 +36,19 @@ type Training struct {
 }
 
 func (t *Training) TrainDir(ctx context.Context, jobName, basedir string, imgHeight, imgWidth int, sliceSize int, withFlipImage bool, outputModelFile string, enableSpotTraining bool) error {
-	log.Printf("run training with data from %s\n", basedir)
+	l := zap.S()
+	l.Infof("run training with data from %s", basedir)
 	archive, err := data.BuildArchive(basedir, sliceSize, withFlipImage)
 	if err != nil {
 		return fmt.Errorf("unable to build data archive: %w", err)
 	}
-	log.Println("")
+	l.Info("")
 
 	err = t.UploadArchive(ctx, archive)
 	if err != nil {
 		return fmt.Errorf("unable to upload data arrchive: %w", err)
 	}
-	log.Println("")
+	l.Info("")
 
 	err = t.runTraining(
 		ctx,
@@ -162,17 +163,17 @@ func (t *Training) runTraining(ctx context.Context, jobName string, slideSize in
 			},
 		)
 		if err != nil {
-			log.Printf("unable to get status from ob %v: %v\n", jobOutput.TrainingJobArn, err)
+			l.Infof("unable to get status from ob %v: %v", jobOutput.TrainingJobArn, err)
 			continue
 		}
 		switch status.TrainingJobStatus {
 		case types.TrainingJobStatusInProgress:
-			log.Printf("job in progress: %v - %v - %v\n", status.TrainingJobStatus, status.SecondaryStatus, *status.SecondaryStatusTransitions[len(status.SecondaryStatusTransitions) - 1].StatusMessage)
+			l.Infof("job in progress: %v - %v - %v", status.TrainingJobStatus, status.SecondaryStatus, *status.SecondaryStatusTransitions[len(status.SecondaryStatusTransitions) - 1].StatusMessage)
 			continue
 		case types.TrainingJobStatusFailed:
-			return fmt.Errorf("job %s finished with status %v\n", jobName, status.TrainingJobStatus)
+			return fmt.Errorf("job %s finished with status %v", jobName, status.TrainingJobStatus)
 		default:
-			log.Printf("job %s finished with status %v\n", jobName, status.TrainingJobStatus)
+			l.Infof("job %s finished with status %v", jobName, status.TrainingJobStatus)
 			return nil
 		}
 	}

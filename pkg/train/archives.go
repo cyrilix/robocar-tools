@@ -8,7 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/cyrilix/robocar-tools/pkg/awsutils"
-	"log"
+	"go.uber.org/zap"
 )
 
 func ListArchives(ctx context.Context, bucket string) error {
@@ -31,7 +31,7 @@ func (t Training) UploadArchive(ctx context.Context, archive []byte) error {
 	client := s3.NewFromConfig(t.config)
 	key := aws.String("input/data/train/train.zip")
 
-	log.Printf("upload archive to bucket '%s/%s'\n", t.bucketName, *key)
+	zap.S().Infof("upload archive to bucket '%s/%s'", t.bucketName, *key)
 	_, err := client.PutObject(
 		ctx,
 		&s3.PutObjectInput{
@@ -43,6 +43,6 @@ func (t Training) UploadArchive(ctx context.Context, archive []byte) error {
 	if err != nil {
 		return fmt.Errorf("unable to upload archive: %w", err)
 	}
-	log.Println("archive uploaded")
+	zap.S().Info("archive uploaded")
 	return nil
 }
