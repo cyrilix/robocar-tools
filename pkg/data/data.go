@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cyrilix/robocar-tools/record"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"os"
 	"path"
@@ -31,7 +31,8 @@ func WriteArchive(basedir string, archiveName string, sliceSize int) error {
 }
 
 func BuildArchive(basedir string, sliceSize int) ([]byte, error) {
-	log.Printf("build zip archive from %s\n", basedir)
+	l := zap.S()
+	l.Infof("build zip archive from %s\n", basedir)
 	dirItems, err := ioutil.ReadDir(basedir)
 	if err != nil {
 		return nil, fmt.Errorf("unable to list directory in %v dir: %w", basedir, err)
@@ -41,7 +42,7 @@ func BuildArchive(basedir string, sliceSize int) ([]byte, error) {
 	records := make([]string, 0)
 
 	for _, dirItem := range dirItems {
-		log.Debugf("process %v directory", dirItem)
+		l.Infof("process %v directory", dirItem.Name())
 		imgDir := path.Join(basedir, dirItem.Name(), camSubDir)
 		imgs, err := ioutil.ReadDir(imgDir)
 		if err != nil {
@@ -53,7 +54,7 @@ func BuildArchive(basedir string, sliceSize int) ([]byte, error) {
 			if err != nil {
 				return nil, fmt.Errorf("unable to find index in cam image name %v: %w", img.Name(), err)
 			}
-			log.Debugf("found image with index %v", idx)
+			l.Debugf("found image with index %v", idx)
 			records = append(records, path.Join(basedir, dirItem.Name(), fmt.Sprintf(record.RecorNameFormat, idx)))
 			imgCams = append(imgCams, path.Join(basedir, dirItem.Name(), camSubDir, img.Name()))
 		}
@@ -67,7 +68,7 @@ func BuildArchive(basedir string, sliceSize int) ([]byte, error) {
 	if err != nil {
 		return nil , fmt.Errorf("unable to generate archive content: %w", err)
 	}
-	log.Printf("archive built\n")
+	l.Info("archive built\n")
 	return content, nil
 }
 
@@ -84,7 +85,7 @@ var indexRegexp *regexp.Regexp
 func init() {
 	re, err := regexp.Compile("image_array_(?P<idx>[0-9]+)\\.jpg$")
 	if err != nil {
-		log.Fatalf("unable to compile regex: %v", err)
+		zap.S().Fatalf("unable to compile regex: %v", err)
 	}
 	indexRegexp = re
 }
