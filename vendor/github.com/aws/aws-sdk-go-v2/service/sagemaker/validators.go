@@ -70,6 +70,26 @@ func (m *validateOpAssociateTrialComponent) HandleInitialize(ctx context.Context
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpBatchDescribeModelPackage struct {
+}
+
+func (*validateOpBatchDescribeModelPackage) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpBatchDescribeModelPackage) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*BatchDescribeModelPackageInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpBatchDescribeModelPackageInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpCreateAction struct {
 }
 
@@ -3690,6 +3710,26 @@ func (m *validateOpUpdatePipeline) HandleInitialize(ctx context.Context, in midd
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpUpdateProject struct {
+}
+
+func (*validateOpUpdateProject) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpUpdateProject) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*UpdateProjectInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpUpdateProjectInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpUpdateTrainingJob struct {
 }
 
@@ -3820,6 +3860,10 @@ func addOpAddTagsValidationMiddleware(stack *middleware.Stack) error {
 
 func addOpAssociateTrialComponentValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpAssociateTrialComponent{}, middleware.After)
+}
+
+func addOpBatchDescribeModelPackageValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpBatchDescribeModelPackage{}, middleware.After)
 }
 
 func addOpCreateActionValidationMiddleware(stack *middleware.Stack) error {
@@ -4544,6 +4588,10 @@ func addOpUpdatePipelineExecutionValidationMiddleware(stack *middleware.Stack) e
 
 func addOpUpdatePipelineValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpUpdatePipeline{}, middleware.After)
+}
+
+func addOpUpdateProjectValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpUpdateProject{}, middleware.After)
 }
 
 func addOpUpdateTrainingJobValidationMiddleware(stack *middleware.Stack) error {
@@ -5600,6 +5648,40 @@ func validateDevices(v []types.Device) error {
 	for i := range v {
 		if err := validateDevice(&v[i]); err != nil {
 			invalidParams.AddNested(fmt.Sprintf("[%d]", i), err.(smithy.InvalidParamsError))
+		}
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateDomainSettings(v *types.DomainSettings) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "DomainSettings"}
+	if v.RStudioServerProDomainSettings != nil {
+		if err := validateRStudioServerProDomainSettings(v.RStudioServerProDomainSettings); err != nil {
+			invalidParams.AddNested("RStudioServerProDomainSettings", err.(smithy.InvalidParamsError))
+		}
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateDomainSettingsForUpdate(v *types.DomainSettingsForUpdate) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "DomainSettingsForUpdate"}
+	if v.RStudioServerProDomainSettingsForUpdate != nil {
+		if err := validateRStudioServerProDomainSettingsForUpdate(v.RStudioServerProDomainSettingsForUpdate); err != nil {
+			invalidParams.AddNested("RStudioServerProDomainSettingsForUpdate", err.(smithy.InvalidParamsError))
 		}
 	}
 	if invalidParams.Len() > 0 {
@@ -7808,6 +7890,36 @@ func validateRetryStrategy(v *types.RetryStrategy) error {
 	}
 }
 
+func validateRStudioServerProDomainSettings(v *types.RStudioServerProDomainSettings) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "RStudioServerProDomainSettings"}
+	if v.DomainExecutionRoleArn == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("DomainExecutionRoleArn"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateRStudioServerProDomainSettingsForUpdate(v *types.RStudioServerProDomainSettingsForUpdate) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "RStudioServerProDomainSettingsForUpdate"}
+	if v.DomainExecutionRoleArn == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("DomainExecutionRoleArn"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateS3DataSource(v *types.S3DataSource) error {
 	if v == nil {
 		return nil
@@ -7907,9 +8019,6 @@ func validateServiceCatalogProvisioningDetails(v *types.ServiceCatalogProvisioni
 	invalidParams := smithy.InvalidParamsError{Context: "ServiceCatalogProvisioningDetails"}
 	if v.ProductId == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("ProductId"))
-	}
-	if v.ProvisioningArtifactId == nil {
-		invalidParams.Add(smithy.NewErrParamRequired("ProvisioningArtifactId"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -8095,6 +8204,11 @@ func validateTrafficRoutingConfig(v *types.TrafficRoutingConfig) error {
 	if v.CanarySize != nil {
 		if err := validateCapacitySize(v.CanarySize); err != nil {
 			invalidParams.AddNested("CanarySize", err.(smithy.InvalidParamsError))
+		}
+	}
+	if v.LinearStepSize != nil {
+		if err := validateCapacitySize(v.LinearStepSize); err != nil {
+			invalidParams.AddNested("LinearStepSize", err.(smithy.InvalidParamsError))
 		}
 	}
 	if invalidParams.Len() > 0 {
@@ -8485,6 +8599,21 @@ func validateOpAssociateTrialComponentInput(v *AssociateTrialComponentInput) err
 	}
 	if v.TrialName == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("TrialName"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpBatchDescribeModelPackageInput(v *BatchDescribeModelPackageInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "BatchDescribeModelPackageInput"}
+	if v.ModelPackageArnList == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("ModelPackageArnList"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -8907,6 +9036,11 @@ func validateOpCreateDomainInput(v *CreateDomainInput) error {
 			invalidParams.AddNested("Tags", err.(smithy.InvalidParamsError))
 		}
 	}
+	if v.DomainSettings != nil {
+		if err := validateDomainSettings(v.DomainSettings); err != nil {
+			invalidParams.AddNested("DomainSettings", err.(smithy.InvalidParamsError))
+		}
+	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
 	} else {
@@ -9000,6 +9134,11 @@ func validateOpCreateEndpointInput(v *CreateEndpointInput) error {
 	}
 	if v.EndpointConfigName == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("EndpointConfigName"))
+	}
+	if v.DeploymentConfig != nil {
+		if err := validateDeploymentConfig(v.DeploymentConfig); err != nil {
+			invalidParams.AddNested("DeploymentConfig", err.(smithy.InvalidParamsError))
+		}
 	}
 	if v.Tags != nil {
 		if err := validateTagList(v.Tags); err != nil {
@@ -12094,6 +12233,11 @@ func validateOpUpdateDomainInput(v *UpdateDomainInput) error {
 			invalidParams.AddNested("DefaultUserSettings", err.(smithy.InvalidParamsError))
 		}
 	}
+	if v.DomainSettingsForUpdate != nil {
+		if err := validateDomainSettingsForUpdate(v.DomainSettingsForUpdate); err != nil {
+			invalidParams.AddNested("DomainSettingsForUpdate", err.(smithy.InvalidParamsError))
+		}
+	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
 	} else {
@@ -12189,9 +12333,6 @@ func validateOpUpdateModelPackageInput(v *UpdateModelPackageInput) error {
 	if v.ModelPackageArn == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("ModelPackageArn"))
 	}
-	if len(v.ModelApprovalStatus) == 0 {
-		invalidParams.Add(smithy.NewErrParamRequired("ModelApprovalStatus"))
-	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
 	} else {
@@ -12273,6 +12414,26 @@ func validateOpUpdatePipelineInput(v *UpdatePipelineInput) error {
 	invalidParams := smithy.InvalidParamsError{Context: "UpdatePipelineInput"}
 	if v.PipelineName == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("PipelineName"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpUpdateProjectInput(v *UpdateProjectInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "UpdateProjectInput"}
+	if v.ProjectName == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("ProjectName"))
+	}
+	if v.Tags != nil {
+		if err := validateTagList(v.Tags); err != nil {
+			invalidParams.AddNested("Tags", err.(smithy.InvalidParamsError))
+		}
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams

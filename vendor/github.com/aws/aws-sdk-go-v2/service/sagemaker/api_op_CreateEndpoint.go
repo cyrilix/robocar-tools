@@ -54,16 +54,16 @@ import (
 // CreateEndpoint and CreateEndpointConfig API operations, add the following
 // policies to the role.
 //
-// * Option 1: For a full Amazon SageMaker access, search
-// and attach the AmazonSageMakerFullAccess policy.
+// * Option 1: For a full SageMaker access, search and
+// attach the AmazonSageMakerFullAccess policy.
 //
-// * Option 2: For granting a
-// limited access to an IAM role, paste the following Action elements manually into
-// the JSON file of the IAM role: "Action": ["sagemaker:CreateEndpoint",
+// * Option 2: For granting a limited
+// access to an IAM role, paste the following Action elements manually into the
+// JSON file of the IAM role: "Action": ["sagemaker:CreateEndpoint",
 // "sagemaker:CreateEndpointConfig"]"Resource":
 // ["arn:aws:sagemaker:region:account-id:endpoint/endpointName""arn:aws:sagemaker:region:account-id:endpoint-config/endpointConfigName"]
-// For more information, see Amazon SageMaker API Permissions: Actions,
-// Permissions, and Resources Reference
+// For more information, see SageMaker API Permissions: Actions, Permissions, and
+// Resources Reference
 // (https://docs.aws.amazon.com/sagemaker/latest/dg/api-permissions-reference.html).
 func (c *Client) CreateEndpoint(ctx context.Context, params *CreateEndpointInput, optFns ...func(*Options)) (*CreateEndpointOutput, error) {
 	if params == nil {
@@ -94,6 +94,10 @@ type CreateEndpointInput struct {
 	//
 	// This member is required.
 	EndpointName *string
+
+	// The deployment configuration for an endpoint, which contains the desired
+	// deployment strategy and rollback configurations.
+	DeploymentConfig *types.DeploymentConfig
 
 	// An array of key-value pairs. You can use tags to categorize your Amazon Web
 	// Services resources in different ways, for example, by purpose, owner, or

@@ -69,10 +69,10 @@ type AgentVersion struct {
 	noSmithyDocumentSerde
 }
 
-// This API is not supported.
+// An Amazon CloudWatch alarm configured to monitor metrics on an endpoint.
 type Alarm struct {
 
-	//
+	// The name of a CloudWatch alarm in your account.
 	AlarmName *string
 
 	noSmithyDocumentSerde
@@ -86,23 +86,28 @@ type Alarm struct {
 // (https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms.html).
 type AlgorithmSpecification struct {
 
-	// The input mode that the algorithm supports. For the input modes that Amazon
-	// SageMaker algorithms support, see Algorithms
-	// (https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html). If an algorithm
-	// supports the File input mode, Amazon SageMaker downloads the training data from
-	// S3 to the provisioned ML storage Volume, and mounts the directory to docker
-	// volume for training container. If an algorithm supports the Pipe input mode,
-	// Amazon SageMaker streams data directly from S3 to the container. In File mode,
-	// make sure you provision ML storage volume with sufficient capacity to
-	// accommodate the data download from S3. In addition to the training data, the ML
-	// storage volume also stores the output model. The algorithm container use ML
-	// storage volume to also store intermediate information, if any. For distributed
-	// algorithms using File mode, training data is distributed uniformly, and your
-	// training duration is predictable if the input data objects size is approximately
-	// same. Amazon SageMaker does not split the files any further for model training.
-	// If the object sizes are skewed, training won't be optimal as the data
-	// distribution is also skewed where one host in a training cluster is overloaded,
-	// thus becoming bottleneck in training.
+	// The training input mode that the algorithm supports. For more information about
+	// input modes, see Algorithms
+	// (https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html). Pipe mode If an
+	// algorithm supports Pipe mode, Amazon SageMaker streams data directly from Amazon
+	// S3 to the container. File mode If an algorithm supports File mode, SageMaker
+	// downloads the training data from S3 to the provisioned ML storage volume, and
+	// mounts the directory to the Docker volume for the training container. You must
+	// provision the ML storage volume with sufficient capacity to accommodate the data
+	// downloaded from S3. In addition to the training data, the ML storage volume also
+	// stores the output model. The algorithm container uses the ML storage volume to
+	// also store intermediate information, if any. For distributed algorithms,
+	// training data is distributed uniformly. Your training duration is predictable if
+	// the input data objects sizes are approximately the same. SageMaker does not
+	// split the files any further for model training. If the object sizes are skewed,
+	// training won't be optimal as the data distribution is also skewed when one host
+	// in a training cluster is overloaded, thus becoming a bottleneck in training.
+	// FastFile mode If an algorithm supports FastFile mode, SageMaker streams data
+	// directly from S3 to the container with no code changes, and provides file system
+	// access to the data. Users can author their training script to interact with
+	// these files as if they were stored on disk. FastFile mode works best when the
+	// data is read sequentially. Augmented manifest files aren't supported. The
+	// startup time is lower when there are fewer files in the S3 bucket provided.
 	//
 	// This member is required.
 	TrainingInputMode TrainingInputMode
@@ -1583,14 +1588,20 @@ type AutoMLJobArtifacts struct {
 // generate.
 type AutoMLJobCompletionCriteria struct {
 
-	// The maximum runtime, in seconds, an AutoML job has to complete.
+	// The maximum runtime, in seconds, an AutoML job has to complete. If an AutoML job
+	// exceeds the maximum runtime, the job is stopped automatically and its processing
+	// is ended gracefully. The AutoML job identifies the best model whose training was
+	// completed and marks it as the best-performing model. Any unfinished steps of the
+	// job, such as automatic one-click Autopilot model deployment, will not be
+	// completed.
 	MaxAutoMLJobRuntimeInSeconds *int32
 
 	// The maximum number of times a training job is allowed to run.
 	MaxCandidates *int32
 
-	// The maximum time, in seconds, a training job is allowed to run as part of an
-	// AutoML job.
+	// The maximum time, in seconds, that each training job is allowed to run as part
+	// of a hyperparameter tuning job. For more information, see the used by the
+	// action.
 	MaxRuntimePerTrainingJobInSeconds *int32
 
 	noSmithyDocumentSerde
@@ -1786,11 +1797,70 @@ type AutoMLSecurityConfig struct {
 	noSmithyDocumentSerde
 }
 
-// Currently, the AutoRollbackConfig API is not supported.
+// Automatic rollback configuration for handling endpoint deployment failures and
+// recovery.
 type AutoRollbackConfig struct {
 
-	//
+	// List of CloudWatch alarms in your account that are configured to monitor metrics
+	// on an endpoint. If any alarms are tripped during a deployment, SageMaker rolls
+	// back the deployment.
 	Alarms []Alarm
+
+	noSmithyDocumentSerde
+}
+
+// The error code and error description associated with the resource.
+type BatchDescribeModelPackageError struct {
+
+	//
+	//
+	// This member is required.
+	ErrorCode *string
+
+	//
+	//
+	// This member is required.
+	ErrorResponse *string
+
+	noSmithyDocumentSerde
+}
+
+// Provides summary information about the model package.
+type BatchDescribeModelPackageSummary struct {
+
+	// The creation time of the mortgage package summary.
+	//
+	// This member is required.
+	CreationTime *time.Time
+
+	// Defines how to perform inference generation after a training job is run.
+	//
+	// This member is required.
+	InferenceSpecification *InferenceSpecification
+
+	// The Amazon Resource Name (ARN) of the model package.
+	//
+	// This member is required.
+	ModelPackageArn *string
+
+	// The group name for the model package
+	//
+	// This member is required.
+	ModelPackageGroupName *string
+
+	// The status of the mortgage package.
+	//
+	// This member is required.
+	ModelPackageStatus ModelPackageStatus
+
+	// The approval status of the model.
+	ModelApprovalStatus ModelApprovalStatus
+
+	// The description of the model package.
+	ModelPackageDescription *string
+
+	// The version number of a versioned model.
+	ModelPackageVersion *int32
 
 	noSmithyDocumentSerde
 }
@@ -1804,18 +1874,27 @@ type Bias struct {
 	noSmithyDocumentSerde
 }
 
-// Currently, the BlueGreenUpdatePolicy API is not supported.
+// Update policy for a blue/green deployment. If this update policy is specified,
+// SageMaker creates a new fleet during the deployment while maintaining the old
+// fleet. SageMaker flips traffic to the new fleet according to the specified
+// traffic routing configuration. Only one update policy should be used in the
+// deployment configuration. If no update policy is specified, SageMaker uses a
+// blue/green deployment strategy with all at once traffic shifting by default.
 type BlueGreenUpdatePolicy struct {
 
-	//
+	// Defines the traffic routing strategy to shift traffic from the old fleet to the
+	// new fleet during an endpoint deployment.
 	//
 	// This member is required.
 	TrafficRoutingConfiguration *TrafficRoutingConfig
 
-	//
+	// Maximum execution timeout for the deployment. Note that the timeout value should
+	// be larger than the total waiting time specified in TerminationWaitInSeconds and
+	// WaitIntervalInSeconds.
 	MaximumExecutionTimeoutInSeconds *int32
 
-	//
+	// Additional waiting time in seconds after the completion of an endpoint
+	// deployment before terminating the old endpoint fleet. Default is 0.
 	TerminationWaitInSeconds *int32
 
 	noSmithyDocumentSerde
@@ -1870,15 +1949,22 @@ type CandidateProperties struct {
 	noSmithyDocumentSerde
 }
 
-// Currently, the CapacitySize API is not supported.
+// Specifies the endpoint capacity to activate for production.
 type CapacitySize struct {
 
-	// This API is not supported.
+	// Specifies the endpoint capacity type.
+	//
+	// * INSTANCE_COUNT: The endpoint activates
+	// based on the number of instances.
+	//
+	// * CAPACITY_PERCENT: The endpoint activates
+	// based on the specified percentage of capacity.
 	//
 	// This member is required.
 	Type CapacitySizeType
 
-	//
+	// Defines the capacity size, either as a number of instances or a capacity
+	// percentage.
 	//
 	// This member is required.
 	Value *int32
@@ -2493,14 +2579,14 @@ type DataProcessing struct {
 	// join the original input data with the transformed data, set JoinSource to Input.
 	// You can specify OutputFilter as an additional filter to select a portion of the
 	// joined dataset and store it in the output file. For JSON or JSONLines objects,
-	// such as a JSON array, Amazon SageMaker adds the transformed data to the input
-	// JSON object in an attribute called SageMakerOutput. The joined result for JSON
-	// must be a key-value pair object. If the input is not a key-value pair object,
-	// Amazon SageMaker creates a new JSON file. In the new JSON file, and the input
-	// data is stored under the SageMakerInput key and the results are stored in
-	// SageMakerOutput. For CSV data, Amazon SageMaker takes each row as a JSON array
-	// and joins the transformed data with the input by appending each transformed row
-	// to the end of the input. The joined data has the original input data followed by
+	// such as a JSON array, SageMaker adds the transformed data to the input JSON
+	// object in an attribute called SageMakerOutput. The joined result for JSON must
+	// be a key-value pair object. If the input is not a key-value pair object,
+	// SageMaker creates a new JSON file. In the new JSON file, and the input data is
+	// stored under the SageMakerInput key and the results are stored in
+	// SageMakerOutput. For CSV data, SageMaker takes each row as a JSON array and
+	// joins the transformed data with the input by appending each transformed row to
+	// the end of the input. The joined data has the original input data followed by
 	// the transformed data and the output is a CSV file. For information on how
 	// joining in applied, see Workflow for Associating Inferences with Input Records
 	// (https://docs.aws.amazon.com/sagemaker/latest/dg/batch-transform-data-processing.html#batch-transform-data-processing-workflow).
@@ -2730,15 +2816,22 @@ type DeployedImage struct {
 	noSmithyDocumentSerde
 }
 
-// Currently, the DeploymentConfig API is not supported.
+// The deployment configuration for an endpoint, which contains the desired
+// deployment strategy and rollback configurations.
 type DeploymentConfig struct {
 
-	//
+	// Update policy for a blue/green deployment. If this update policy is specified,
+	// SageMaker creates a new fleet during the deployment while maintaining the old
+	// fleet. SageMaker flips traffic to the new fleet according to the specified
+	// traffic routing configuration. Only one update policy should be used in the
+	// deployment configuration. If no update policy is specified, SageMaker uses a
+	// blue/green deployment strategy with all at once traffic shifting by default.
 	//
 	// This member is required.
 	BlueGreenUpdatePolicy *BlueGreenUpdatePolicy
 
-	//
+	// Automatic rollback configuration for handling endpoint deployment failures and
+	// recovery.
 	AutoRollbackConfiguration *AutoRollbackConfig
 
 	noSmithyDocumentSerde
@@ -2829,6 +2922,9 @@ type DeviceSummary struct {
 	// This member is required.
 	DeviceName *string
 
+	// Edge Manager agent version.
+	AgentVersion *string
+
 	// A description of the device.
 	Description *string
 
@@ -2874,6 +2970,29 @@ type DomainDetails struct {
 
 	// The domain's URL.
 	Url *string
+
+	noSmithyDocumentSerde
+}
+
+// A collection of settings that apply to the SageMaker Domain. These settings are
+// specified through the CreateDomain API call.
+type DomainSettings struct {
+
+	// A collection of settings that configure the RStudioServerPro Domain-level app.
+	RStudioServerProDomainSettings *RStudioServerProDomainSettings
+
+	// The security groups for the Amazon Virtual Private Cloud that the Domain uses
+	// for communication between Domain-level apps and user apps.
+	SecurityGroupIds []string
+
+	noSmithyDocumentSerde
+}
+
+// A collection of Domain configuration settings to update.
+type DomainSettingsForUpdate struct {
+
+	// A collection of RStudioServerPro Domain-level app settings to update.
+	RStudioServerProDomainSettingsForUpdate *RStudioServerProDomainSettingsForUpdate
 
 	noSmithyDocumentSerde
 }
@@ -3172,7 +3291,7 @@ type EndpointInput struct {
 	// S3 key. Defaults to FullyReplicated
 	S3DataDistributionType ProcessingS3DataDistributionType
 
-	// Whether the Pipe or File is used as the input mode for transfering data for the
+	// Whether the Pipe or File is used as the input mode for transferring data for the
 	// monitoring job. Pipe mode is recommended for large datasets. File mode is useful
 	// for small files that fit in memory. Defaults to File.
 	S3InputMode ProcessingS3InputMode
@@ -5007,8 +5126,9 @@ type HumanTaskConfig struct {
 	// * For 3D point cloud
 	// (https://docs.aws.amazon.com/sagemaker/latest/dg/sms-point-cloud.html) and video
 	// frame (https://docs.aws.amazon.com/sagemaker/latest/dg/sms-video.html) labeling
-	// jobs, the maximum is 7 days (604,800 seconds). If you want to change these
-	// limits, contact Amazon Web Services Support.
+	// jobs, the maximum is 30 days (2952,000 seconds) for non-AL mode. For most users,
+	// the maximum is also 30 days. If you want to change these limits, contact Amazon
+	// Web Services Support.
 	//
 	// This member is required.
 	TaskTimeLimitInSeconds *int32
@@ -5047,8 +5167,8 @@ type HumanTaskConfig struct {
 	// seconds).
 	//
 	// * If you choose a private or vendor workforce, the default value is
-	// 10 days (864,000 seconds). For most users, the maximum is also 10 days. If you
-	// want to change this limit, contact Amazon Web Services Support.
+	// 30 days (2592,000 seconds) for non-AL mode. For most users, the maximum is also
+	// 30 days. If you want to change this limit, contact Amazon Web Services Support.
 	TaskAvailabilityLifetimeInSeconds *int32
 
 	// Keywords used to describe the task so that workers on Amazon Mechanical Turk can
@@ -5083,16 +5203,28 @@ type HumanTaskUiSummary struct {
 // hyperparameter tuning job launches and the metrics to monitor.
 type HyperParameterAlgorithmSpecification struct {
 
-	// The input mode that the algorithm supports: File or Pipe. In File input mode,
-	// Amazon SageMaker downloads the training data from Amazon S3 to the storage
-	// volume that is attached to the training instance and mounts the directory to the
-	// Docker volume for the training container. In Pipe input mode, Amazon SageMaker
-	// streams data directly from Amazon S3 to the container. If you specify File mode,
-	// make sure that you provision the storage volume that is attached to the training
-	// instance with enough capacity to accommodate the training data downloaded from
-	// Amazon S3, the model artifacts, and intermediate information. For more
-	// information about input modes, see Algorithms
-	// (https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html).
+	// The training input mode that the algorithm supports. For more information about
+	// input modes, see Algorithms
+	// (https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html). Pipe mode If an
+	// algorithm supports Pipe mode, Amazon SageMaker streams data directly from Amazon
+	// S3 to the container. File mode If an algorithm supports File mode, SageMaker
+	// downloads the training data from S3 to the provisioned ML storage volume, and
+	// mounts the directory to the Docker volume for the training container. You must
+	// provision the ML storage volume with sufficient capacity to accommodate the data
+	// downloaded from S3. In addition to the training data, the ML storage volume also
+	// stores the output model. The algorithm container uses the ML storage volume to
+	// also store intermediate information, if any. For distributed algorithms,
+	// training data is distributed uniformly. Your training duration is predictable if
+	// the input data objects sizes are approximately the same. SageMaker does not
+	// split the files any further for model training. If the object sizes are skewed,
+	// training won't be optimal as the data distribution is also skewed when one host
+	// in a training cluster is overloaded, thus becoming a bottleneck in training.
+	// FastFile mode If an algorithm supports FastFile mode, SageMaker streams data
+	// directly from S3 to the container with no code changes, and provides file system
+	// access to the data. Users can author their training script to interact with
+	// these files as if they were stored on disk. FastFile mode works best when the
+	// data is read sequentially. Augmented manifest files aren't supported. The
+	// startup time is lower when there are fewer files in the S3 bucket provided.
 	//
 	// This member is required.
 	TrainingInputMode TrainingInputMode
@@ -6454,7 +6586,7 @@ type MetricsSource struct {
 
 // Provides information about the location that is configured for storing model
 // artifacts. Model artifacts are the output that results from training a model,
-// and typically consist of trained parameters, a model defintion that describes
+// and typically consist of trained parameters, a model definition that describes
 // how to compute inferences, and other metadata.
 type ModelArtifacts struct {
 
@@ -6661,6 +6793,9 @@ type ModelPackage struct {
 
 	// The time that the model package was created.
 	CreationTime *time.Time
+
+	// The metadata properties for the model package.
+	CustomerMetadataProperties map[string]string
 
 	// Defines how to perform inference generation after a training job is run.
 	InferenceSpecification *InferenceSpecification
@@ -8255,6 +8390,71 @@ type ParentHyperParameterTuningJob struct {
 	noSmithyDocumentSerde
 }
 
+// The summary of an in-progress deployment when an endpoint is creating or
+// updating with a new endpoint configuration.
+type PendingDeploymentSummary struct {
+
+	// The name of the endpoint configuration used in the deployment.
+	//
+	// This member is required.
+	EndpointConfigName *string
+
+	// List of PendingProductionVariantSummary objects.
+	ProductionVariants []PendingProductionVariantSummary
+
+	// The start time of the deployment.
+	StartTime *time.Time
+
+	noSmithyDocumentSerde
+}
+
+// The production variant summary for a deployment when an endpoint is creating or
+// updating with the CreateEndpoint or UpdateEndpoint operations. Describes the
+// VariantStatus , weight and capacity for a production variant associated with an
+// endpoint.
+type PendingProductionVariantSummary struct {
+
+	// The name of the variant.
+	//
+	// This member is required.
+	VariantName *string
+
+	// The size of the Elastic Inference (EI) instance to use for the production
+	// variant. EI instances provide on-demand GPU computing for inference. For more
+	// information, see Using Elastic Inference in Amazon SageMaker
+	// (https://docs.aws.amazon.com/sagemaker/latest/dg/ei.html).
+	AcceleratorType ProductionVariantAcceleratorType
+
+	// The number of instances associated with the variant.
+	CurrentInstanceCount *int32
+
+	// The weight associated with the variant.
+	CurrentWeight *float32
+
+	// An array of DeployedImage objects that specify the Amazon EC2 Container Registry
+	// paths of the inference images deployed on instances of this ProductionVariant.
+	DeployedImages []DeployedImage
+
+	// The number of instances requested in this deployment, as specified in the
+	// endpoint configuration for the endpoint. The value is taken from the request to
+	// the CreateEndpointConfig operation.
+	DesiredInstanceCount *int32
+
+	// The requested weight for the variant in this deployment, as specified in the
+	// endpoint configuration for the endpoint. The value is taken from the request to
+	// the CreateEndpointConfig operation.
+	DesiredWeight *float32
+
+	// The type of instances associated with the variant.
+	InstanceType ProductionVariantInstanceType
+
+	// The endpoint variant status which describes the current deployment stage status
+	// or operational status.
+	VariantStatus []ProductionVariantStatus
+
+	noSmithyDocumentSerde
+}
+
 // A SageMaker Model Building Pipeline instance.
 type Pipeline struct {
 
@@ -8933,6 +9133,39 @@ type ProductionVariantCoreDumpConfig struct {
 	noSmithyDocumentSerde
 }
 
+// Describes the status of the production variant.
+type ProductionVariantStatus struct {
+
+	// The endpoint variant status which describes the current deployment stage status
+	// or operational status.
+	//
+	// * Creating: Creating inference resources for the
+	// production variant.
+	//
+	// * Deleting: Terminating inference resources for the
+	// production variant.
+	//
+	// * Updating: Updating capacity for the production
+	// variant.
+	//
+	// * ActivatingTraffic: Turning on traffic for the production variant.
+	//
+	// *
+	// Baking: Waiting period to monitor the CloudWatch alarms in the automatic
+	// rollback configuration.
+	//
+	// This member is required.
+	Status VariantStatus
+
+	// The start time of the current status change.
+	StartTime *time.Time
+
+	// A message that describes the status of the production variant.
+	StatusMessage *string
+
+	noSmithyDocumentSerde
+}
+
 // Describes weight and capacities for a production variant associated with an
 // endpoint. If you sent a request to the UpdateEndpointWeightsAndCapacities API
 // and the endpoint status is Updating, you get different desired and current
@@ -8961,6 +9194,10 @@ type ProductionVariantSummary struct {
 	// The requested weight, as specified in the UpdateEndpointWeightsAndCapacities
 	// request.
 	DesiredWeight *float32
+
+	// The endpoint variant status which describes the current deployment stage status
+	// or operational status.
+	VariantStatus []ProductionVariantStatus
 
 	noSmithyDocumentSerde
 }
@@ -9082,6 +9319,13 @@ type Project struct {
 
 	// A timestamp specifying when the project was created.
 	CreationTime *time.Time
+
+	// Information about the user who created or modified an experiment, trial, trial
+	// component, or project.
+	LastModifiedBy *UserContext
+
+	// A timestamp container for when the project was last modified.
+	LastModifiedTime *time.Time
 
 	// The Amazon Resource Name (ARN) of the project.
 	ProjectArn *string
@@ -9658,6 +9902,64 @@ type RetryStrategy struct {
 	noSmithyDocumentSerde
 }
 
+// A collection of settings that apply to an RSessionGateway app.
+type RSessionAppSettings struct {
+	noSmithyDocumentSerde
+}
+
+// A collection of settings that configure user interaction with the
+// RStudioServerPro app. RStudioServerProAppSettings cannot be updated. The
+// RStudioServerPro app must be deleted and a new one created to make any changes.
+type RStudioServerProAppSettings struct {
+
+	// Indicates whether the current user has access to the RStudioServerPro app.
+	AccessStatus RStudioServerProAccessStatus
+
+	// The level of permissions that the user has within the RStudioServerPro app. This
+	// value defaults to `User`. The `Admin` value allows the user access to the
+	// RStudio Administrative Dashboard.
+	UserGroup RStudioServerProUserGroup
+
+	noSmithyDocumentSerde
+}
+
+// A collection of settings that configure the RStudioServerPro Domain-level app.
+type RStudioServerProDomainSettings struct {
+
+	// The ARN of the execution role for the RStudioServerPro Domain-level app.
+	//
+	// This member is required.
+	DomainExecutionRoleArn *string
+
+	// Specifies the ARN's of a SageMaker image and SageMaker image version, and the
+	// instance type that the version runs on.
+	DefaultResourceSpec *ResourceSpec
+
+	// A URL pointing to an RStudio Connect server.
+	RStudioConnectUrl *string
+
+	// A URL pointing to an RStudio Package Manager server.
+	RStudioPackageManagerUrl *string
+
+	noSmithyDocumentSerde
+}
+
+// A collection of settings that update the current configuration for the
+// RStudioServerPro Domain-level app.
+type RStudioServerProDomainSettingsForUpdate struct {
+
+	// The execution role for the RStudioServerPro Domain-level app.
+	//
+	// This member is required.
+	DomainExecutionRoleArn *string
+
+	// Specifies the ARN's of a SageMaker image and SageMaker image version, and the
+	// instance type that the version runs on.
+	DefaultResourceSpec *ResourceSpec
+
+	noSmithyDocumentSerde
+}
+
 // Describes the S3 data source.
 type S3DataSource struct {
 
@@ -10034,14 +10336,26 @@ type ServiceCatalogProvisioningDetails struct {
 	// This member is required.
 	ProductId *string
 
-	// The ID of the provisioning artifact.
-	//
-	// This member is required.
-	ProvisioningArtifactId *string
-
 	// The path identifier of the product. This value is optional if the product has a
 	// default path, and required if the product has more than one path.
 	PathId *string
+
+	// The ID of the provisioning artifact.
+	ProvisioningArtifactId *string
+
+	// A list of key value pairs that you specify when you provision a product.
+	ProvisioningParameters []ProvisioningParameter
+
+	noSmithyDocumentSerde
+}
+
+// Details that you specify to provision a service catalog product. For information
+// about service catalog, see What is Amazon Web Services Service Catalog
+// (https://docs.aws.amazon.com/servicecatalog/latest/adminguide/introduction.html).
+type ServiceCatalogProvisioningUpdateDetails struct {
+
+	// The ID of the provisioning artifact.
+	ProvisioningArtifactId *string
 
 	// A list of key value pairs that you specify when you provision a product.
 	ProvisioningParameters []ProvisioningParameter
@@ -10143,22 +10457,22 @@ type SourceIpConfig struct {
 	noSmithyDocumentSerde
 }
 
-// Specifies a limit to how long a model training job, model compilation job, or
-// hyperparameter tuning job can run. It also specifies how long a managed Spot
-// training job has to complete. When the job reaches the time limit, Amazon
-// SageMaker ends the training or compilation job. Use this API to cap model
-// training costs. To stop a training job, Amazon SageMaker sends the algorithm the
-// SIGTERM signal, which delays job termination for 120 seconds. Algorithms can use
-// this 120-second window to save the model artifacts, so the results of training
-// are not lost. The training algorithms provided by Amazon SageMaker automatically
-// save the intermediate results of a model training job when possible. This
-// attempt to save artifacts is only a best effort case as model might not be in a
-// state from which it can be saved. For example, if training has just started, the
-// model might not be ready to save. When saved, this intermediate data is a valid
-// model artifact. You can use it to create a model with CreateModel. The Neural
-// Topic Model (NTM) currently does not support saving intermediate model
-// artifacts. When training NTMs, make sure that the maximum runtime is sufficient
-// for the training job to complete.
+// Specifies a limit to how long a model training job or model compilation job can
+// run. It also specifies how long a managed spot training job has to complete.
+// When the job reaches the time limit, Amazon SageMaker ends the training or
+// compilation job. Use this API to cap model training costs. To stop a training
+// job, Amazon SageMaker sends the algorithm the SIGTERM signal, which delays job
+// termination for 120 seconds. Algorithms can use this 120-second window to save
+// the model artifacts, so the results of training are not lost. The training
+// algorithms provided by Amazon SageMaker automatically save the intermediate
+// results of a model training job when possible. This attempt to save artifacts is
+// only a best effort case as model might not be in a state from which it can be
+// saved. For example, if training has just started, the model might not be ready
+// to save. When saved, this intermediate data is a valid model artifact. You can
+// use it to create a model with CreateModel. The Neural Topic Model (NTM)
+// currently does not support saving intermediate model artifacts. When training
+// NTMs, make sure that the maximum runtime is sufficient for the training job to
+// complete.
 type StoppingCondition struct {
 
 	// The maximum length of time, in seconds, that a training or compilation job can
@@ -10240,12 +10554,12 @@ type SuggestionQuery struct {
 }
 
 // A tag object that consists of a key and an optional value, used to manage
-// metadata for Amazon SageMaker Amazon Web Services resources. You can add tags to
+// metadata for SageMaker Amazon Web Services resources. You can add tags to
 // notebook instances, training jobs, hyperparameter tuning jobs, batch transform
 // jobs, models, labeling jobs, work teams, endpoint configurations, and endpoints.
-// For more information on adding tags to Amazon SageMaker resources, see AddTags.
-// For more information on adding metadata to your Amazon Web Services resources
-// with tagging, see Tagging Amazon Web Services resources
+// For more information on adding tags to SageMaker resources, see AddTags. For
+// more information on adding metadata to your Amazon Web Services resources with
+// tagging, see Tagging Amazon Web Services resources
 // (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html). For advice on
 // best practices for managing Amazon Web Services resources with tagging, see
 // Tagging Best Practices: Implement an Effective Amazon Web Services Resource
@@ -10341,21 +10655,38 @@ type TensorBoardOutputConfig struct {
 	noSmithyDocumentSerde
 }
 
-// Currently, the TrafficRoutingConfig API is not supported.
+// Defines the traffic routing strategy during an endpoint deployment to shift
+// traffic from the old fleet to the new fleet.
 type TrafficRoutingConfig struct {
 
+	// Traffic routing strategy type.
 	//
+	// * ALL_AT_ONCE: Endpoint traffic shifts to the
+	// new fleet in a single step.
+	//
+	// * CANARY: Endpoint traffic shifts to the new fleet
+	// in two steps. The first step is the canary, which is a small portion of the
+	// traffic. The second step is the remainder of the traffic.
+	//
+	// * LINEAR: Endpoint
+	// traffic shifts to the new fleet in n steps of a configurable size.
 	//
 	// This member is required.
 	Type TrafficRoutingConfigType
 
-	//
+	// The waiting time (in seconds) between incremental steps to turn on traffic on
+	// the new endpoint fleet.
 	//
 	// This member is required.
 	WaitIntervalInSeconds *int32
 
-	//
+	// Batch size for the first step to turn on traffic on the new endpoint fleet.
+	// Value must be less than or equal to 50% of the variant's total instance count.
 	CanarySize *CapacitySize
+
+	// Batch size for each step to turn on traffic on the new endpoint fleet. Value
+	// must be 10-50% of the variant's total instance count.
+	LinearStepSize *CapacitySize
 
 	noSmithyDocumentSerde
 }
@@ -10623,13 +10954,28 @@ type TrainingJobDefinition struct {
 	// This member is required.
 	StoppingCondition *StoppingCondition
 
-	// The input mode used by the algorithm for the training job. For the input modes
-	// that Amazon SageMaker algorithms support, see Algorithms
-	// (https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html). If an algorithm
-	// supports the File input mode, Amazon SageMaker downloads the training data from
-	// S3 to the provisioned ML storage Volume, and mounts the directory to docker
-	// volume for training container. If an algorithm supports the Pipe input mode,
-	// Amazon SageMaker streams data directly from S3 to the container.
+	// The training input mode that the algorithm supports. For more information about
+	// input modes, see Algorithms
+	// (https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html). Pipe mode If an
+	// algorithm supports Pipe mode, Amazon SageMaker streams data directly from Amazon
+	// S3 to the container. File mode If an algorithm supports File mode, SageMaker
+	// downloads the training data from S3 to the provisioned ML storage volume, and
+	// mounts the directory to the Docker volume for the training container. You must
+	// provision the ML storage volume with sufficient capacity to accommodate the data
+	// downloaded from S3. In addition to the training data, the ML storage volume also
+	// stores the output model. The algorithm container uses the ML storage volume to
+	// also store intermediate information, if any. For distributed algorithms,
+	// training data is distributed uniformly. Your training duration is predictable if
+	// the input data objects sizes are approximately the same. SageMaker does not
+	// split the files any further for model training. If the object sizes are skewed,
+	// training won't be optimal as the data distribution is also skewed when one host
+	// in a training cluster is overloaded, thus becoming a bottleneck in training.
+	// FastFile mode If an algorithm supports FastFile mode, SageMaker streams data
+	// directly from S3 to the container with no code changes, and provides file system
+	// access to the data. Users can author their training script to interact with
+	// these files as if they were stored on disk. FastFile mode works best when the
+	// data is read sequentially. Augmented manifest files aren't supported. The
+	// startup time is lower when there are fewer files in the S3 bucket provided.
 	//
 	// This member is required.
 	TrainingInputMode TrainingInputMode
@@ -11346,21 +11692,11 @@ type TrialComponentMetricSummary struct {
 // specified. This object is specified in the CreateTrialComponent request.
 //
 // The following types satisfy this interface:
-//  TrialComponentParameterValueMemberStringValue
 //  TrialComponentParameterValueMemberNumberValue
+//  TrialComponentParameterValueMemberStringValue
 type TrialComponentParameterValue interface {
 	isTrialComponentParameterValue()
 }
-
-// The string value of a categorical hyperparameter. If you specify a value for
-// this parameter, you can't specify the NumberValue parameter.
-type TrialComponentParameterValueMemberStringValue struct {
-	Value string
-
-	noSmithyDocumentSerde
-}
-
-func (*TrialComponentParameterValueMemberStringValue) isTrialComponentParameterValue() {}
 
 // The numeric value of a numeric hyperparameter. If you specify a value for this
 // parameter, you can't specify the StringValue parameter.
@@ -11371,6 +11707,16 @@ type TrialComponentParameterValueMemberNumberValue struct {
 }
 
 func (*TrialComponentParameterValueMemberNumberValue) isTrialComponentParameterValue() {}
+
+// The string value of a categorical hyperparameter. If you specify a value for
+// this parameter, you can't specify the NumberValue parameter.
+type TrialComponentParameterValueMemberStringValue struct {
+	Value string
+
+	noSmithyDocumentSerde
+}
+
+func (*TrialComponentParameterValueMemberStringValue) isTrialComponentParameterValue() {}
 
 // A short summary of a trial component.
 type TrialComponentSimpleSummary struct {
@@ -11701,6 +12047,13 @@ type UserSettings struct {
 
 	// The kernel gateway app settings.
 	KernelGatewayAppSettings *KernelGatewayAppSettings
+
+	// A collection of settings that configure the RSessionGateway app.
+	RSessionAppSettings *RSessionAppSettings
+
+	// A collection of settings that configure user interaction with the
+	// RStudioServerPro app.
+	RStudioServerProAppSettings *RStudioServerProAppSettings
 
 	// The security groups for the Amazon Virtual Private Cloud (VPC) that Studio uses
 	// for communication. Optional when the CreateDomain.AppNetworkAccessType parameter

@@ -326,6 +326,9 @@ func (c *Client) addOperationWriteGetObjectResponseMiddlewares(stack *middleware
 	if err = addResponseErrorMiddleware(stack); err != nil {
 		return err
 	}
+	if err = v4.UseDynamicPayloadSigningMiddleware(stack); err != nil {
+		return err
+	}
 	if err = disableAcceptEncodingGzip(stack); err != nil {
 		return err
 	}
@@ -396,7 +399,6 @@ func addWriteGetObjectResponseUpdateEndpoint(stack *middleware.Stack, options Op
 		TargetS3ObjectLambda:           true,
 		EndpointResolver:               options.EndpointResolver,
 		EndpointResolverOptions:        options.EndpointOptions,
-		UseDualstack:                   options.UseDualstack,
 		UseARNRegion:                   options.UseARNRegion,
 		DisableMultiRegionAccessPoints: options.DisableMultiRegionAccessPoints,
 	})

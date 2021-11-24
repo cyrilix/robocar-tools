@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sagemaker"
 	"github.com/aws/aws-sdk-go-v2/service/sagemaker/types"
+	"github.com/cyrilix/robocar-tools/pkg/awsutils"
 	"github.com/cyrilix/robocar-tools/pkg/data"
 	"io/fs"
 	"io/ioutil"
@@ -17,7 +18,7 @@ import (
 
 func New(bucketName string, ociImage, roleArn string) *Training {
 	return &Training{
-		config:       mustLoadConfig(),
+		config:       awsutils.MustLoadConfig(),
 		bucketName:   bucketName,
 		ociImage:     ociImage,
 		roleArn:      roleArn,
@@ -171,34 +172,17 @@ func (t *Training) runTraining(ctx context.Context, jobName string, slideSize in
 }
 
 func (t *Training) GetTrainingOutput(ctx context.Context, jobName, outputFile string) error {
-	// Create an Amazon S3 service client
-	client := s3.NewFromConfig(t.config)
-
-	// Get the first page of results for ListObjectsV2 for a bucket
-	output, err := client.GetObject(
-		ctx,
-		&s3.GetObjectInput{
-			Bucket: aws.String(t.bucketName),
-			Key:    aws.String(fmt.Sprintf("output/%s/model.tar.gz", jobName)),
-		},
-	)
+	modelPath := fmt.Sprintf("output/%s/output/model.tar.gz", jobName)
+	err := models.DownloadArchiveToFile(ctx, t.bucketName, modelPath, outputFile)
 	if err != nil {
-		return fmt.Errorf("unable to get resource: %w", err)
-	}
-	content, err := ioutil.ReadAll(output.Body)
-	if err != nil {
-		return fmt.Errorf("unable read output content: %w", err)
-	}
-	err = ioutil.WriteFile(outputFile, content, fs.ModePerm)
-	if err != nil {
-		return fmt.Errorf("unable to write content to '%v': %w", outputFile, err)
+		return fmt.Errorf("unable to download training model '%s' to '%s' file: %w", modelPath, outputFile, err)
 	}
 	return nil
 }
 
 func ListJob(ctx context.Context) error {
 
-	client := sagemaker.NewFromConfig(mustLoadConfig())
+	client := sagemaker.NewFromConfig(awsutils.MustLoadConfig())
 	jobs, err := client.ListTrainingJobs(ctx, &sagemaker.ListTrainingJobsInput{})
 	if err != nil {
 		return fmt.Errorf("unable to list trainings jobs: %w", err)

@@ -220,6 +220,24 @@ func (AppNetworkAccessType) Values() []AppNetworkAccessType {
 	}
 }
 
+type AppSecurityGroupManagement string
+
+// Enum values for AppSecurityGroupManagement
+const (
+	AppSecurityGroupManagementService  AppSecurityGroupManagement = "Service"
+	AppSecurityGroupManagementCustomer AppSecurityGroupManagement = "Customer"
+)
+
+// Values returns all known values for AppSecurityGroupManagement. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (AppSecurityGroupManagement) Values() []AppSecurityGroupManagement {
+	return []AppSecurityGroupManagement{
+		"Service",
+		"Customer",
+	}
+}
+
 type AppSortKey string
 
 // Enum values for AppSortKey
@@ -264,9 +282,11 @@ type AppType string
 
 // Enum values for AppType
 const (
-	AppTypeJupyterServer AppType = "JupyterServer"
-	AppTypeKernelGateway AppType = "KernelGateway"
-	AppTypeTensorBoard   AppType = "TensorBoard"
+	AppTypeJupyterServer    AppType = "JupyterServer"
+	AppTypeKernelGateway    AppType = "KernelGateway"
+	AppTypeTensorBoard      AppType = "TensorBoard"
+	AppTypeRStudioServerPro AppType = "RStudioServerPro"
+	AppTypeRSessionGateway  AppType = "RSessionGateway"
 )
 
 // Values returns all known values for AppType. Note that this can be expanded in
@@ -277,6 +297,8 @@ func (AppType) Values() []AppType {
 		"JupyterServer",
 		"KernelGateway",
 		"TensorBoard",
+		"RStudioServerPro",
+		"RSessionGateway",
 	}
 }
 
@@ -2985,6 +3007,9 @@ const (
 	ProjectStatusDeleteInProgress ProjectStatus = "DeleteInProgress"
 	ProjectStatusDeleteFailed     ProjectStatus = "DeleteFailed"
 	ProjectStatusDeleteCompleted  ProjectStatus = "DeleteCompleted"
+	ProjectStatusUpdateInProgress ProjectStatus = "UpdateInProgress"
+	ProjectStatusUpdateCompleted  ProjectStatus = "UpdateCompleted"
+	ProjectStatusUpdateFailed     ProjectStatus = "UpdateFailed"
 )
 
 // Values returns all known values for ProjectStatus. Note that this can be
@@ -2999,6 +3024,9 @@ func (ProjectStatus) Values() []ProjectStatus {
 		"DeleteInProgress",
 		"DeleteFailed",
 		"DeleteCompleted",
+		"UpdateInProgress",
+		"UpdateCompleted",
+		"UpdateFailed",
 	}
 }
 
@@ -3150,6 +3178,42 @@ func (RootAccess) Values() []RootAccess {
 	return []RootAccess{
 		"Enabled",
 		"Disabled",
+	}
+}
+
+type RStudioServerProAccessStatus string
+
+// Enum values for RStudioServerProAccessStatus
+const (
+	RStudioServerProAccessStatusEnabled  RStudioServerProAccessStatus = "ENABLED"
+	RStudioServerProAccessStatusDisabled RStudioServerProAccessStatus = "DISABLED"
+)
+
+// Values returns all known values for RStudioServerProAccessStatus. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (RStudioServerProAccessStatus) Values() []RStudioServerProAccessStatus {
+	return []RStudioServerProAccessStatus{
+		"ENABLED",
+		"DISABLED",
+	}
+}
+
+type RStudioServerProUserGroup string
+
+// Enum values for RStudioServerProUserGroup
+const (
+	RStudioServerProUserGroupAdmin RStudioServerProUserGroup = "R_STUDIO_ADMIN"
+	RStudioServerProUserGroupUser  RStudioServerProUserGroup = "R_STUDIO_USER"
+)
+
+// Values returns all known values for RStudioServerProUserGroup. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (RStudioServerProUserGroup) Values() []RStudioServerProUserGroup {
+	return []RStudioServerProUserGroup{
+		"R_STUDIO_ADMIN",
+		"R_STUDIO_USER",
 	}
 }
 
@@ -3756,6 +3820,7 @@ type TrafficRoutingConfigType string
 const (
 	TrafficRoutingConfigTypeAllAtOnce TrafficRoutingConfigType = "ALL_AT_ONCE"
 	TrafficRoutingConfigTypeCanary    TrafficRoutingConfigType = "CANARY"
+	TrafficRoutingConfigTypeLinear    TrafficRoutingConfigType = "LINEAR"
 )
 
 // Values returns all known values for TrafficRoutingConfigType. Note that this can
@@ -3765,6 +3830,7 @@ func (TrafficRoutingConfigType) Values() []TrafficRoutingConfigType {
 	return []TrafficRoutingConfigType{
 		"ALL_AT_ONCE",
 		"CANARY",
+		"LINEAR",
 	}
 }
 
@@ -3772,8 +3838,9 @@ type TrainingInputMode string
 
 // Enum values for TrainingInputMode
 const (
-	TrainingInputModePipe TrainingInputMode = "Pipe"
-	TrainingInputModeFile TrainingInputMode = "File"
+	TrainingInputModePipe     TrainingInputMode = "Pipe"
+	TrainingInputModeFile     TrainingInputMode = "File"
+	TrainingInputModeFastfile TrainingInputMode = "FastFile"
 )
 
 // Values returns all known values for TrainingInputMode. Note that this can be
@@ -3783,6 +3850,7 @@ func (TrainingInputMode) Values() []TrainingInputMode {
 	return []TrainingInputMode{
 		"Pipe",
 		"File",
+		"FastFile",
 	}
 }
 
@@ -4131,5 +4199,29 @@ func (VariantPropertyType) Values() []VariantPropertyType {
 		"DesiredInstanceCount",
 		"DesiredWeight",
 		"DataCaptureConfig",
+	}
+}
+
+type VariantStatus string
+
+// Enum values for VariantStatus
+const (
+	VariantStatusCreating          VariantStatus = "Creating"
+	VariantStatusUpdating          VariantStatus = "Updating"
+	VariantStatusDeleting          VariantStatus = "Deleting"
+	VariantStatusActivatingTraffic VariantStatus = "ActivatingTraffic"
+	VariantStatusBaking            VariantStatus = "Baking"
+)
+
+// Values returns all known values for VariantStatus. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (VariantStatus) Values() []VariantStatus {
+	return []VariantStatus{
+		"Creating",
+		"Updating",
+		"Deleting",
+		"ActivatingTraffic",
+		"Baking",
 	}
 }

@@ -419,6 +419,9 @@ func (c *Client) addOperationPutObjectMiddlewares(stack *middleware.Stack, optio
 	if err = v4.AddContentSHA256HeaderMiddleware(stack); err != nil {
 		return err
 	}
+	if err = v4.UseDynamicPayloadSigningMiddleware(stack); err != nil {
+		return err
+	}
 	if err = disableAcceptEncodingGzip(stack); err != nil {
 		return err
 	}
@@ -457,7 +460,6 @@ func addPutObjectUpdateEndpoint(stack *middleware.Stack, options Options) error 
 		TargetS3ObjectLambda:           false,
 		EndpointResolver:               options.EndpointResolver,
 		EndpointResolverOptions:        options.EndpointOptions,
-		UseDualstack:                   options.UseDualstack,
 		UseARNRegion:                   options.UseARNRegion,
 		DisableMultiRegionAccessPoints: options.DisableMultiRegionAccessPoints,
 	})

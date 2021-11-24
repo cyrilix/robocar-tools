@@ -7,11 +7,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/cyrilix/robocar-tools/pkg/awsutils"
 	"log"
 )
 
 func ListArchives(ctx context.Context, bucket string) error {
-	client := s3.NewFromConfig(mustLoadConfig())
+	client := s3.NewFromConfig(awsutils.MustLoadConfig())
 
 	prefix := aws.String("input/data/train/train.zip")
 	objects, err := client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
