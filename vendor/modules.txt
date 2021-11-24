@@ -108,6 +108,9 @@ github.com/cyrilix/robocar-base/service
 # github.com/cyrilix/robocar-protobuf/go v1.0.3
 ## explicit; go 1.17
 github.com/cyrilix/robocar-protobuf/go/events
+# github.com/disintegration/imaging v1.6.2
+## explicit
+github.com/disintegration/imaging
 # github.com/eclipse/paho.mqtt.golang v1.3.5
 ## explicit; go 1.14
 github.com/eclipse/paho.mqtt.golang
@@ -142,6 +145,12 @@ go.uber.org/zap/zapcore
 # gocv.io/x/gocv v0.28.0
 ## explicit; go 1.13
 gocv.io/x/gocv
+# golang.org/x/image v0.0.0-20191009234506-e7c1f5e7dbb8
+## explicit; go 1.12
+golang.org/x/image/bmp
+golang.org/x/image/ccitt
+golang.org/x/image/tiff
+golang.org/x/image/tiff/lzw
 # golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 ## explicit; go 1.17
 golang.org/x/net/internal/socks

@@ -9,8 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/sagemaker/types"
 	"github.com/cyrilix/robocar-tools/pkg/awsutils"
 	"github.com/cyrilix/robocar-tools/pkg/data"
-	"io/fs"
-	"io/ioutil"
+	"github.com/cyrilix/robocar-tools/pkg/models"
 	"log"
 	"strconv"
 	"time"
@@ -36,9 +35,9 @@ type Training struct {
 	outputBucket string
 }
 
-func (t *Training) TrainDir(ctx context.Context, jobName, basedir string, sliceSize int, outputModelFile string) error {
+func (t *Training) TrainDir(ctx context.Context, jobName, basedir string, imgHeight, imgWidth int, sliceSize int, withFlipImage bool, outputModelFile string, enableSpotTraining bool) error {
 	log.Printf("run training with data from %s\n", basedir)
-	archive, err := data.BuildArchive(basedir, sliceSize)
+	archive, err := data.BuildArchive(basedir, sliceSize, withFlipImage)
 	if err != nil {
 		return fmt.Errorf("unable to build data archive: %w", err)
 	}
@@ -54,8 +53,9 @@ func (t *Training) TrainDir(ctx context.Context, jobName, basedir string, sliceS
 		ctx,
 		jobName,
 		sliceSize,
-		120,
-		160,
+		imgHeight,
+		imgWidth,
+		enableSpotTraining,
 	)
 	if err != nil {
 		return fmt.Errorf("unable to run training: %w", err)
@@ -69,11 +69,11 @@ func (t *Training) TrainDir(ctx context.Context, jobName, basedir string, sliceS
 }
 
 func List(bucketName string) error {
-
+	l := zap.S()
 	pfxInput := prefixInput
 
 	// Create an Amazon S3 service client
-	client := s3.NewFromConfig(mustLoadConfig())
+	client := s3.NewFromConfig(awsutils.MustLoadConfig())
 
 	// Get the first page of results for ListObjectsV2 for a bucket
 	output, err := client.ListObjectsV2(context.TODO(), &s3.ListObjectsV2Input{
@@ -81,64 +81,71 @@ func List(bucketName string) error {
 		Prefix: &pfxInput,
 	})
 	if err != nil {
-		log.Fatal(err)
+		l.Fatal(err)
 	}
 
-	log.Println("first page results:")
+	l.Info("first page results:")
 	for _, object := range output.Contents {
 		if *object.Key == pfxInput {
 			continue
 		}
-		log.Printf("key=%s size=%d", aws.ToString(object.Key), object.Size)
+		l.Infof("key=%s size=%d", aws.ToString(object.Key), object.Size)
 	}
 	return nil
 }
 
-func (t *Training) runTraining(ctx context.Context, jobName string, slideSize int, imgHeight, imgWidth int) error {
-	client := sagemaker.NewFromConfig(mustLoadConfig())
-	log.Printf("Start training job '%s'\n", jobName)
-	// TODO: check train data exist
-	jobOutput, err := client.CreateTrainingJob(
-		ctx,
-		&sagemaker.CreateTrainingJobInput{
-			EnableManagedSpotTraining: true,
-			AlgorithmSpecification: &types.AlgorithmSpecification{
-				TrainingInputMode: types.TrainingInputModeFile,
-				TrainingImage:     aws.String(t.ociImage),
-			},
-			OutputDataConfig: &types.OutputDataConfig{
-				S3OutputPath: aws.String(t.outputBucket),
-			},
-			ResourceConfig: &types.ResourceConfig{
-				InstanceCount:  1,
-				InstanceType:   types.TrainingInstanceTypeMlP2Xlarge,
-				VolumeSizeInGB: 1,
-			},
-			RoleArn: aws.String(t.roleArn),
-			StoppingCondition: &types.StoppingCondition{
-				MaxRuntimeInSeconds: 1800,
-				MaxWaitTimeInSeconds: aws.Int32(3600),
-			},
-			TrainingJobName: aws.String(jobName),
-			HyperParameters: map[string]string{
-				"sagemaker_region": "eu-west-1",
-				"slide_size":       strconv.Itoa(slideSize),
-				"img_height":       strconv.Itoa(imgHeight),
-				"img_width":        strconv.Itoa(imgWidth),
-			},
-			InputDataConfig: []types.Channel{
-				{
-					ChannelName: aws.String("train"),
-					DataSource: &types.DataSource{
-						S3DataSource: &types.S3DataSource{
-							S3DataType:             types.S3DataTypeS3Prefix,
-							S3Uri:                  aws.String(fmt.Sprintf("s3://%s/%s", t.bucketName, t.prefixInput)),
-							S3DataDistributionType: types.S3DataDistributionFullyReplicated,
-						},
+func (t *Training) runTraining(ctx context.Context, jobName string, slideSize int, imgHeight, imgWidth int, enableSpotTraining bool) error {
+	l := zap.S()
+	client := sagemaker.NewFromConfig(awsutils.MustLoadConfig())
+	l.Infof("Start training job '%s'", jobName)
+
+	trainingJobInput := sagemaker.CreateTrainingJobInput{
+		EnableManagedSpotTraining: enableSpotTraining,
+		AlgorithmSpecification: &types.AlgorithmSpecification{
+			TrainingInputMode: types.TrainingInputModeFile,
+			TrainingImage:     aws.String(t.ociImage),
+		},
+		OutputDataConfig: &types.OutputDataConfig{
+			S3OutputPath: aws.String(t.outputBucket),
+		},
+		ResourceConfig: &types.ResourceConfig{
+			InstanceCount:  1,
+			//InstanceType:   types.TrainingInstanceTypeMlP2Xlarge,
+			InstanceType:   types.TrainingInstanceTypeMlG4dnXlarge,
+			VolumeSizeInGB: 1,
+		},
+		RoleArn: aws.String(t.roleArn),
+		StoppingCondition: &types.StoppingCondition{
+			MaxRuntimeInSeconds: 1800,
+		},
+		TrainingJobName: aws.String(jobName),
+		HyperParameters: map[string]string{
+			"sagemaker_region": "eu-west-1",
+			"slide_size":       strconv.Itoa(slideSize),
+			"img_height":       strconv.Itoa(imgHeight),
+			"img_width":        strconv.Itoa(imgWidth),
+		},
+		InputDataConfig: []types.Channel{
+			{
+				ChannelName: aws.String("train"),
+				DataSource: &types.DataSource{
+					S3DataSource: &types.S3DataSource{
+						S3DataType:             types.S3DataTypeS3Prefix,
+						S3Uri:                  aws.String(fmt.Sprintf("s3://%s/%s", t.bucketName, t.prefixInput)),
+						S3DataDistributionType: types.S3DataDistributionFullyReplicated,
 					},
 				},
 			},
 		},
+	}
+	if enableSpotTraining {
+		trainingJobInput.StoppingCondition.MaxWaitTimeInSeconds = aws.Int32(3600)
+	}
+
+	// TODO: check train data exist
+	jobOutput, err := client.CreateTrainingJob(
+		ctx,
+		&trainingJobInput,
 	)
 
 	if err != nil {

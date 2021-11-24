@@ -6,17 +6,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cyrilix/robocar-tools/record"
+	"github.com/disintegration/imaging"
 	"go.uber.org/zap"
+	"image"
+	"image/jpeg"
 	"io/ioutil"
 	"os"
 	"path"
 	"regexp"
+	"strings"
 )
 
 var camSubDir = "cam"
 
-func WriteArchive(basedir string, archiveName string, sliceSize int) error {
-	content, err := BuildArchive(basedir, sliceSize)
+func WriteArchive(basedir string, archiveName string, sliceSize int, flipImages bool) error {
+	content, err := BuildArchive(basedir, sliceSize, flipImages)
 	if err != nil {
 		return fmt.Errorf("unable to build archive: %w", err)
 	}
@@ -30,7 +34,7 @@ func WriteArchive(basedir string, archiveName string, sliceSize int) error {
 	return nil
 }
 
-func BuildArchive(basedir string, sliceSize int) ([]byte, error) {
+func BuildArchive(basedir string, sliceSize int, flipImages bool) ([]byte, error) {
 	l := zap.S()
 	l.Infof("build zip archive from %s\n", basedir)
 	dirItems, err := ioutil.ReadDir(basedir)
@@ -64,9 +68,29 @@ func BuildArchive(basedir string, sliceSize int) ([]byte, error) {
 		imgCams, records, err = applySlice(imgCams, records, sliceSize)
 	}
 
-	content, err := buildArchiveContent(imgCams, records)
+	// Create a buffer to write our archive to.
+	buf := new(bytes.Buffer)
+	// Create a new zip archive.
+	w := zip.NewWriter(buf)
+
+	err = buildArchiveContent(w, imgCams, records, false)
 	if err != nil {
-		return nil , fmt.Errorf("unable to generate archive content: %w", err)
+		return nil, fmt.Errorf("unable to build archive: %w", err)
+	}
+	if flipImages {
+		err = buildArchiveContent(w, imgCams, records, true)
+		if err != nil {
+			return nil, fmt.Errorf("unable to build archive: %w", err)
+		}
+	}
+
+	err = w.Close()
+	if err != nil {
+		return nil, fmt.Errorf("unable to close zip archive: %w", err)
+	}
+	content, err := ioutil.ReadAll(buf)
+	if err != nil {
+		return nil, fmt.Errorf("unable to generate archive content: %w", err)
 	}
 	l.Info("archive built\n")
 	return content, nil
@@ -108,40 +132,41 @@ func findNamedMatches(regex *regexp.Regexp, str string) map[string]string {
 	return results
 }
 
-func buildArchiveContent(imgFiles []string, recordFiles []string) ([]byte, error) {
-	// Create a buffer to write our archive to.
-	buf := new(bytes.Buffer)
-
-	// Create a new zip archive.
-	w := zip.NewWriter(buf)
-
-	err := addJsonFiles(recordFiles, imgFiles, w)
+func buildArchiveContent(w *zip.Writer, imgFiles []string, recordFiles []string, withFlipImages bool) error {
+	err := addJsonFiles(recordFiles, imgFiles, withFlipImages, w)
 	if err != nil {
-		return nil, fmt.Errorf("unable to write json files in zip archive: %w", err)
+		return fmt.Errorf("unable to write json files in zip archive: %w", err)
 	}
 
-	err = addCamImages(imgFiles, w)
+	err = addCamImages(imgFiles, withFlipImages, w)
 	if err != nil {
-		return nil, fmt.Errorf("unable to cam files in zip archive: %w", err)
+		return fmt.Errorf("unable to cam files in zip archive: %w", err)
 	}
 
-	err = w.Close()
-	if err != nil {
-		return nil, fmt.Errorf("unable to build archive: %w", err)
-	}
-
-	content, err := ioutil.ReadAll(buf)
-	return content, err
+	return err
 }
 
-func addCamImages(imgFiles []string, w *zip.Writer) error {
-	for _, img := range imgFiles {
-		imgContent, err := ioutil.ReadFile(img)
+func addCamImages(imgFiles []string, flipImage bool, w *zip.Writer) error {
+	for _, im := range imgFiles {
+		imgContent, err := ioutil.ReadFile(im)
 		if err != nil {
 			return fmt.Errorf("unable to read img: %w", err)
 		}
 
-		_, imgName := path.Split(img)
+		_, imgName := path.Split(im)
+		if flipImage {
+			img, _, err := image.Decode(bytes.NewReader(imgContent))
+			if err != nil {
+				zap.S().Fatalf("unable to decode peg image: %v", err)
+			}
+			imgFlip := imaging.FlipH(img)
+			var bytesBuff bytes.Buffer
+			err = jpeg.Encode(&bytesBuff, imgFlip, nil)
+
+			imgContent = bytesBuff.Bytes()
+			imgName = fmt.Sprintf("flip_%s", imgName)
+		}
+
 		err = addToArchive(w, imgName, imgContent)
 		if err != nil {
 			return fmt.Errorf("unable to create new img entry in archive: %w", err)
@@ -150,7 +175,7 @@ func addCamImages(imgFiles []string, w *zip.Writer) error {
 	return nil
 }
 
-func addJsonFiles(recordFiles []string, imgCam []string, w *zip.Writer)  error {
+func addJsonFiles(recordFiles []string, imgCam []string, flipImage bool, w *zip.Writer) error {
 	for idx, r := range recordFiles {
 		content, err := ioutil.ReadFile(r)
 		if err != nil {
@@ -162,7 +187,13 @@ func addJsonFiles(recordFiles []string, imgCam []string, w *zip.Writer)  error {
 			return fmt.Errorf("unable to unmarshal record: %w", err)
 		}
 		_, camName := path.Split((imgCam)[idx])
-		rcd.CamImageArray = camName
+
+		if flipImage {
+			rcd.UserAngle = rcd.UserAngle * -1
+			rcd.CamImageArray = fmt.Sprintf("flip_%s", camName)
+		}else {
+			rcd.CamImageArray = camName
+		}
 
 		recordBytes, err := json.Marshal(&rcd)
 		if err != nil {
@@ -170,6 +201,9 @@ func addJsonFiles(recordFiles []string, imgCam []string, w *zip.Writer)  error {
 		}
 
 		_, recordName := path.Split(r)
+		if flipImage {
+			recordName = strings.ReplaceAll(recordName, "record", "record_flip")
+		}
 		err = addToArchive(w, recordName, recordBytes)
 		if err != nil {
 			return fmt.Errorf("unable to create new record in archive: %w", err)
@@ -178,7 +212,7 @@ func addJsonFiles(recordFiles []string, imgCam []string, w *zip.Writer)  error {
 	return nil
 }
 
-func addToArchive(w *zip.Writer, name string, content []byte)  error {
+func addToArchive(w *zip.Writer, name string, content []byte) error {
 	recordWriter, err := w.Create(name)
 	if err != nil {
 		return fmt.Errorf("unable to create new entry %v in archive: %w", name, err)
