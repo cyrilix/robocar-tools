@@ -12,7 +12,6 @@ require (
 	github.com/disintegration/imaging v1.6.2
 	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/golang/protobuf v1.5.2
-	github.com/sirupsen/logrus v1.8.1
 	go.uber.org/zap v1.19.1
 	gocv.io/x/gocv v0.28.0
 )
@@ -36,6 +35,5 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/image v0.0.0-20191009234506-e7c1f5e7dbb8 // indirect
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
-	golang.org/x/sys v0.0.0-20210510120138-977fb7262007 // indirect
 	google.golang.org/protobuf v1.26.0 // indirect
 )

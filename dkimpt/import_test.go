@@ -3,7 +3,7 @@ package dkimpt
 import (
 	"encoding/json"
 	record2 "github.com/cyrilix/robocar-tools/record"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"os"
 	"path"
@@ -17,7 +17,7 @@ func TestImportDonkeyRecords(t *testing.T) {
 	}
 	defer func() {
 		err := os.RemoveAll(destDir)
-		log.Errorf("unable to delete tmpdir %v: %v", destDir, err)
+		zap.S().Errorf("unable to delete tmpdir %v: %v", destDir, err)
 	}()
 
 	err = ImportDonkeyRecords("testdata", destDir)

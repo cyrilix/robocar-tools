@@ -7,7 +7,7 @@ import (
 	"github.com/cyrilix/robocar-protobuf/go/events"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/golang/protobuf/proto"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"os"
 )
@@ -50,10 +50,11 @@ func (r *Recorder) Stop() {
 }
 
 func (r *Recorder) onRecordMsg(_ mqtt.Client, message mqtt.Message) {
+	l := zap.S()
 	var msg events.RecordMessage
 	err := proto.Unmarshal(message.Payload(), &msg)
 	if err != nil {
-		log.Errorf("unable to unmarshal protobuf %T: %v", msg, err)
+		zap.S().Errorf("unable to unmarshal protobuf %T: %v", msg, err)
 		return
 	}
 	fmt.Printf("record %s: %s\r", msg.GetRecordSet(), msg.GetFrame().GetId().GetId())
@@ -64,12 +65,12 @@ func (r *Recorder) onRecordMsg(_ mqtt.Client, message mqtt.Message) {
 	imgName := fmt.Sprintf("%s/cam-image_array_%s.jpg", imgDir, msg.GetFrame().GetId().GetId())
 	err = os.MkdirAll(imgDir, os.FileMode(0755))
 	if err != nil {
-		log.Errorf("unable to create %v directory: %v", imgDir, err)
+		l.Errorf("unable to create %v directory: %v", imgDir, err)
 		return
 	}
 	err = ioutil.WriteFile(imgName, msg.GetFrame().GetFrame(), os.FileMode(0755))
 	if err != nil {
-		log.Errorf("unable to write img file %v: %v", imgName, err)
+		l.Errorf("unable to write img file %v: %v", imgName, err)
 		return
 	}
 
@@ -77,7 +78,7 @@ func (r *Recorder) onRecordMsg(_ mqtt.Client, message mqtt.Message) {
 	recordName := fmt.Sprintf("%s/%s", jsonDir, fmt.Sprintf(RecorNameFormat, msg.GetFrame().GetId().GetId()))
 	err = os.MkdirAll(jsonDir, os.FileMode(0755))
 	if err != nil {
-		log.Errorf("unable to create %v directory: %v", jsonDir, err)
+		l.Errorf("unable to create %v directory: %v", jsonDir, err)
 		return
 	}
 	record := Record{
@@ -86,12 +87,12 @@ func (r *Recorder) onRecordMsg(_ mqtt.Client, message mqtt.Message) {
 	}
 	jsonBytes, err := json.Marshal(&record)
 	if err != nil {
-		log.Errorf("unable to marshal json content: %v", err)
+		l.Errorf("unable to marshal json content: %v", err)
 		return
 	}
 	err = ioutil.WriteFile(recordName, jsonBytes, 0755)
 	if err != nil {
-		log.Errorf("unable to write json file %v: %v", recordName, err)
+		l.Errorf("unable to write json file %v: %v", recordName, err)
 	}
 
 }

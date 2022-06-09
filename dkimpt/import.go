@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cyrilix/robocar-tools/record"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"regexp"
@@ -29,7 +30,7 @@ func ImportDonkeyRecords(basedir string, destDir string) error {
 	records := make([]string, 0)
 
 	for _, dirItem := range dirItems {
-		log.Debugf("process %v directory", dirItem)
+		zap.S().Debugf("process %v directory", dirItem)
 		camDir := path.Join(destDir, dirItem.Name(), camSubDir)
 
 		err := os.MkdirAll(camDir, os.FileMode(0755))
@@ -48,14 +49,14 @@ func ImportDonkeyRecords(basedir string, destDir string) error {
 			if err != nil {
 				return fmt.Errorf("unable to find index in cam image name %v: %v", img.Name(), err)
 			}
-			log.Debugf("found image with index %v", idx)
+			zap.S().Debugf("found image with index %v", idx)
 			records = append(records, path.Join(basedir, dirItem.Name(), fmt.Sprintf(record.RecorNameFormat, idx)))
 			imgCams = append(imgCams, path.Join(basedir, dirItem.Name(), camSubDir, img.Name()))
 		}
 
 		err = copyToDestdir(destDir, dirItem.Name(), &imgCams, &records)
 		if err != nil {
-			log.Warnf("unable to copy files from %v to %v: %v", path.Join(basedir, dirItem.Name()), destDir, err)
+			zap.S().Warnf("unable to copy files from %v to %v: %v", path.Join(basedir, dirItem.Name()), destDir, err)
 			continue
 		}
 	}
@@ -118,7 +119,7 @@ func copyCamImages(destdir, dirItem string, imgFiles *[]string) error {
 
 		idx, err := indexFromFile(camIndexRegexp, img)
 		if err != nil {
-			log.Warningf("unable to extract idx from filename %v: %v", img, err)
+			zap.S().Warnf("unable to extract idx from filename %v: %v", img, err)
 			continue
 		}
 		imgName := path.Join(destdir, dirItem, camSubDir, fmt.Sprintf("image_array_%s_%s.jpg", dirItem, idx))
@@ -139,7 +140,7 @@ func copyJsonFiles(destdir, dirItem string, recordFiles *[]string) error {
 		}
 		idx, err := indexFromFile(recordIndexRegexp, r)
 		if err != nil {
-			log.Warningf("unable to extract idx from filename %v: %v", r, err)
+			zap.S().Warnf("unable to extract idx from filename %v: %v", r, err)
 			continue
 		}
 

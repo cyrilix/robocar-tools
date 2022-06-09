@@ -6,7 +6,7 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/timestamp"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"os"
 	"time"
@@ -49,6 +49,7 @@ func (c CameraFake) Start() error {
 }
 
 func (c CameraFake) loop(files []os.FileInfo) {
+	l := zap.S()
 	ticker := time.NewTicker(time.Second / time.Duration(c.fps))
 	defer ticker.Stop()
 
@@ -58,7 +59,7 @@ func (c CameraFake) loop(files []os.FileInfo) {
 			framePath := fmt.Sprintf("%s/%s", c.videoPath, file.Name())
 			frameContent, err := ioutil.ReadFile(framePath)
 			if err != nil {
-				log.Errorf("unable to load frame content for %v: %v", framePath, err)
+				l.Errorf("unable to load frame content for %v: %v", framePath, err)
 				continue
 			}
 			now := time.Now()
@@ -76,7 +77,7 @@ func (c CameraFake) loop(files []os.FileInfo) {
 
 			payload, err := proto.Marshal(msg)
 			if err != nil {
-				log.Errorf("unable to marshal protobuf message: %v", err)
+				l.Errorf("unable to marshal protobuf message: %v", err)
 			}
 
 			publish(c.client, c.frameTopic, &payload)

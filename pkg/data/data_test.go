@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/cyrilix/robocar-tools/record"
-	log "github.com/sirupsen/logrus"
+	"go.uber.org/zap"
 	"io/ioutil"
 	"os"
 	"path"
@@ -21,7 +21,7 @@ func TestBuildArchive(t *testing.T) {
 	defer func() {
 		err := os.RemoveAll(tmpDir)
 		if err != nil {
-			log.Warnf("unable to remove tempdir %v: %v", tmpDir, err)
+			zap.S().Warnf("unable to remove tempdir %v: %v", tmpDir, err)
 		}
 	}()
 
