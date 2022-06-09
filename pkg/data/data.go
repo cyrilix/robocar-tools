@@ -19,8 +19,8 @@ import (
 
 var camSubDir = "cam"
 
-func WriteArchive(basedir string, archiveName string, sliceSize int, flipImages bool) error {
-	content, err := BuildArchive(basedir, sliceSize, flipImages)
+func WriteArchive(basedir string, archiveName string, sliceSize int, imgWidth, imgHeight int, horizon int, flipImages bool) error {
+	content, err := BuildArchive(basedir, sliceSize, imgWidth, imgHeight, horizon, flipImages)
 	if err != nil {
 		return fmt.Errorf("unable to build archive: %w", err)
 	}
@@ -34,7 +34,7 @@ func WriteArchive(basedir string, archiveName string, sliceSize int, flipImages 
 	return nil
 }
 
-func BuildArchive(basedir string, sliceSize int, flipImages bool) ([]byte, error) {
+func BuildArchive(basedir string, sliceSize int, imgWidth, imgHeight int, horizon int, flipImages bool) ([]byte, error) {
 	l := zap.S()
 	l.Infof("build zip archive from %s\n", basedir)
 	dirItems, err := ioutil.ReadDir(basedir)
@@ -59,7 +59,7 @@ func BuildArchive(basedir string, sliceSize int, flipImages bool) ([]byte, error
 				return nil, fmt.Errorf("unable to find index in cam image name %v: %w", img.Name(), err)
 			}
 			l.Debugf("found image with index %v", idx)
-			records = append(records, path.Join(basedir, dirItem.Name(), fmt.Sprintf(record.RecorNameFormat, idx)))
+			records = append(records, path.Join(basedir, dirItem.Name(), fmt.Sprintf(record.FileNameFormat, idx)))
 			imgCams = append(imgCams, path.Join(basedir, dirItem.Name(), camSubDir, img.Name()))
 		}
 	}
@@ -73,12 +73,12 @@ func BuildArchive(basedir string, sliceSize int, flipImages bool) ([]byte, error
 	// Create a new zip archive.
 	w := zip.NewWriter(buf)
 
-	err = buildArchiveContent(w, imgCams, records, false)
+	err = buildArchiveContent(w, imgCams, records, imgWidth, imgHeight, horizon, false)
 	if err != nil {
 		return nil, fmt.Errorf("unable to build archive: %w", err)
 	}
 	if flipImages {
-		err = buildArchiveContent(w, imgCams, records, true)
+		err = buildArchiveContent(w, imgCams, records, imgWidth, imgHeight, horizon, true)
 		if err != nil {
 			return nil, fmt.Errorf("unable to build archive: %w", err)
 		}
@@ -132,13 +132,13 @@ func findNamedMatches(regex *regexp.Regexp, str string) map[string]string {
 	return results
 }
 
-func buildArchiveContent(w *zip.Writer, imgFiles []string, recordFiles []string, withFlipImages bool) error {
+func buildArchiveContent(w *zip.Writer, imgFiles []string, recordFiles []string, imgWidth, imgHeight int, horizon int, withFlipImages bool) error {
 	err := addJsonFiles(recordFiles, imgFiles, withFlipImages, w)
 	if err != nil {
 		return fmt.Errorf("unable to write json files in zip archive: %w", err)
 	}
 
-	err = addCamImages(imgFiles, withFlipImages, w)
+	err = addCamImages(imgFiles, withFlipImages, w, imgWidth, imgHeight, horizon)
 	if err != nil {
 		return fmt.Errorf("unable to cam files in zip archive: %w", err)
 	}
@@ -146,7 +146,7 @@ func buildArchiveContent(w *zip.Writer, imgFiles []string, recordFiles []string,
 	return err
 }
 
-func addCamImages(imgFiles []string, flipImage bool, w *zip.Writer) error {
+func addCamImages(imgFiles []string, flipImage bool, w *zip.Writer, imgWidth, imgHeight int, horizon int) error {
 	for _, im := range imgFiles {
 		imgContent, err := ioutil.ReadFile(im)
 		if err != nil {
@@ -154,17 +154,29 @@ func addCamImages(imgFiles []string, flipImage bool, w *zip.Writer) error {
 		}
 
 		_, imgName := path.Split(im)
-		if flipImage {
+		if flipImage || imgWidth > 0 && imgHeight > 0 || horizon > 0 {
 			img, _, err := image.Decode(bytes.NewReader(imgContent))
 			if err != nil {
-				zap.S().Fatalf("unable to decode peg image: %v", err)
+				zap.S().Fatalf("unable to decode jpeg image: %v", err)
 			}
-			imgFlip := imaging.FlipH(img)
-			var bytesBuff bytes.Buffer
-			err = jpeg.Encode(&bytesBuff, imgFlip, nil)
 
+			if imgWidth > 0 && imgHeight > 0 {
+				bounds := img.Bounds()
+				if bounds.Dx() != imgWidth || bounds.Dy() != imgWidth {
+					zap.S().Debugf("resize image %v from %dx%d to %dx%d", im, bounds.Dx(), bounds.Dy(), imgWidth, imgHeight)
+					img = imaging.Resize(img, imgWidth, imgHeight, imaging.NearestNeighbor)
+				}
+			}
+			if flipImage {
+				img = imaging.FlipH(img)
+				imgName = fmt.Sprintf("flip_%s", imgName)
+			}
+			if horizon > 0 {
+				img = imaging.Crop(img, image.Rect(0, horizon, img.Bounds().Dx(), img.Bounds().Dy()))
+			}
+			var bytesBuff bytes.Buffer
+			err = jpeg.Encode(&bytesBuff, img, nil)
 			imgContent = bytesBuff.Bytes()
-			imgName = fmt.Sprintf("flip_%s", imgName)
 		}
 
 		err = addToArchive(w, imgName, imgContent)

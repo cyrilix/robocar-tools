@@ -50,7 +50,7 @@ func ImportDonkeyRecords(basedir string, destDir string) error {
 				return fmt.Errorf("unable to find index in cam image name %v: %v", img.Name(), err)
 			}
 			zap.S().Debugf("found image with index %v", idx)
-			records = append(records, path.Join(basedir, dirItem.Name(), fmt.Sprintf(record.RecorNameFormat, idx)))
+			records = append(records, path.Join(basedir, dirItem.Name(), fmt.Sprintf(record.FileNameFormat, idx)))
 			imgCams = append(imgCams, path.Join(basedir, dirItem.Name(), camSubDir, img.Name()))
 		}
 

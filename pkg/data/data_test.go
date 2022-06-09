@@ -29,7 +29,7 @@ func TestBuildArchive(t *testing.T) {
 
 	expectedRecordFiles, expectedImgFiles := expectedFiles()
 
-	err = WriteArchive("testdata", archive, 0)
+	err = WriteArchive("testdata", archive, 0, 160, 120, 0, false)
 	if err != nil {
 		t.Errorf("unable to build archive: %v", err)
 	}

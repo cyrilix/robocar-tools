@@ -8,6 +8,7 @@ import (
 	"github.com/cyrilix/robocar-tools/dkimpt"
 	"github.com/cyrilix/robocar-tools/part"
 	"github.com/cyrilix/robocar-tools/pkg/data"
+	"github.com/cyrilix/robocar-tools/pkg/display"
 	"github.com/cyrilix/robocar-tools/pkg/models"
 	"github.com/cyrilix/robocar-tools/pkg/train"
 	"github.com/cyrilix/robocar-tools/record"
@@ -58,16 +59,28 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "Display debug logs")
 
 	displayFlags := flag.NewFlagSet("display", flag.ExitOnError)
-	cli.InitMqttFlagSet(displayFlags, DefaultClientId, &mqttBroker, &username, &password, &clientId, &mqttQos, &mqttRetain)
-	displayFlags.StringVar(&frameTopic, "mqtt-topic-frame", os.Getenv("MQTT_TOPIC_FRAME"), "Mqtt topic that contains frame to display, use MQTT_TOPIC_FRAME if args not set")
-	displayFlags.StringVar(&framePath, "frame-path", "", "Directory path where to read jpeg frame to inject in frame topic")
-	displayFlags.IntVar(&fps, "frame-per-second", 25, "Video frame per second of frame to publish")
 
-	displayFlags.StringVar(&objectsTopic, "mqtt-topic-objects", os.Getenv("MQTT_TOPIC_OBJECTS"), "Mqtt topic that contains detected objects, use MQTT_TOPIC_OBJECTS if args not set")
-	displayFlags.BoolVar(&withObjects, "with-objects", false, "Display detected objects")
+	displayFlags.Usage = func(){
+		fmt.Printf("Usage of %s %s:\n", os.Args[0], displayFlags.Name())
+		fmt.Printf("  camera\n  \tLive from car camera\n")
+		fmt.Printf("  record\n  \tLive from published records\n")
+	}
 
-	displayFlags.StringVar(&roadTopic, "mqtt-topic-road", os.Getenv("MQTT_TOPIC_ROAD"), "Mqtt topic that contains road description, use MQTT_TOPIC_ROAD if args not set")
-	displayFlags.BoolVar(&withRoad, "with-road", false, "Display detected road")
+	displayRecordFlags := flag.NewFlagSet("record", flag.ExitOnError)
+	cli.InitMqttFlagSet(displayRecordFlags, DefaultClientId, &mqttBroker, &username, &password, &clientId, &mqttQos, &mqttRetain)
+	displayRecordFlags.StringVar(&recordTopic, "mqtt-topic-records", os.Getenv("MQTT_TOPIC_RECORDS"), "Mqtt topic that contains record data for training, use MQTT_TOPIC_RECORDS if args not set")
+
+	displayCameraFlags := flag.NewFlagSet("camera", flag.ExitOnError)
+	cli.InitMqttFlagSet(displayCameraFlags, DefaultClientId, &mqttBroker, &username, &password, &clientId, &mqttQos, &mqttRetain)
+	displayCameraFlags.StringVar(&frameTopic, "mqtt-topic-frame", os.Getenv("MQTT_TOPIC_FRAME"), "Mqtt topic that contains frame to display, use MQTT_TOPIC_FRAME if args not set")
+	displayCameraFlags.StringVar(&framePath, "frame-path", "", "Directory path where to read jpeg frame to inject in frame topic")
+	displayCameraFlags.IntVar(&fps, "frame-per-second", 25, "Video frame per second of frame to publish")
+
+	displayCameraFlags.StringVar(&objectsTopic, "mqtt-topic-objects", os.Getenv("MQTT_TOPIC_OBJECTS"), "Mqtt topic that contains detected objects, use MQTT_TOPIC_OBJECTS if args not set")
+	displayCameraFlags.BoolVar(&withObjects, "with-objects", false, "Display detected objects")
+
+	displayCameraFlags.StringVar(&roadTopic, "mqtt-topic-road", os.Getenv("MQTT_TOPIC_ROAD"), "Mqtt topic that contains road description, use MQTT_TOPIC_ROAD if args not set")
+	displayCameraFlags.BoolVar(&withRoad, "with-road", false, "Display detected road")
 
 	recordFlags := flag.NewFlagSet("record", flag.ExitOnError)
 	cli.InitMqttFlagSet(recordFlags, DefaultClientId, &mqttBroker, &username, &password, &clientId, &mqttQos, &mqttRetain)
@@ -90,6 +103,7 @@ func main() {
 	}
 
 	var modelPath, roleArn, trainJobName string
+	var horizon int
 	var withFlipImage bool
 	var trainImageHeight, trainImageWidth int
 	var enableSpotTraining bool
@@ -105,6 +119,7 @@ func main() {
 
 	trainingRunFlags.IntVar(&trainImageHeight, "image-height", 128, "Pixels image height")
 	trainingRunFlags.IntVar(&trainImageWidth, "image-width", 160, "Pixels image width")
+	trainingRunFlags.IntVar(&horizon, "horizon", 0, "Upper zone image to crop (in pixels)")
 
 	trainingRunFlags.BoolVar(&enableSpotTraining, "enable-spot-training", true, "Train models using managed spot training")
 	trainingListJobFlags := flag.NewFlagSet("list", flag.ExitOnError)
@@ -113,6 +128,9 @@ func main() {
 	trainArchiveFlags.StringVar(&recordsPath, "record-path", os.Getenv("RECORD_PATH"), "Path where records files are stored, use RECORD_PATH if args not set")
 	trainArchiveFlags.StringVar(&trainArchiveName, "output", os.Getenv("TRAIN_ARCHIVE_NAME"), "Zip archive file name, use TRAIN_ARCHIVE_NAME if args not set")
 	trainArchiveFlags.IntVar(&trainSliceSize, "slice-size", trainSliceSize, "Number of record to shift with image, use TRAIN_SLICE_SIZE if args not set")
+	trainArchiveFlags.IntVar(&trainImageWidth, "image-width", 0, "Resize image width")
+	trainArchiveFlags.IntVar(&trainImageHeight, "image-height", 0, "Resize image height")
+	trainArchiveFlags.IntVar(&horizon, "horizon", 0, "Upper zone image to crop (in pixels)")
 	trainArchiveFlags.BoolVar(&withFlipImage, "with-flip-image", withFlipImage, "Flip horiontal image and reverse steering to increase data into training archive")
 
 
@@ -160,12 +178,32 @@ func main() {
 			displayFlags.PrintDefaults()
 			os.Exit(0)
 		}
-		client, err := cli.Connect(mqttBroker, username, password, clientId)
-		if err != nil {
-			zap.S().Fatalf("unable to connect to mqtt bus: %v", err)
+		switch displayFlags.Arg(0) {
+		case displayRecordFlags.Name():
+			if err := displayRecordFlags.Parse(os.Args[3:]); err == flag.ErrHelp {
+				displayRecordFlags.PrintDefaults()
+				os.Exit(0)
+			}
+			client, err := cli.Connect(mqttBroker, username, password, clientId)
+			if err != nil {
+				zap.S().Fatalf("unable to connect to mqtt bus: %v", err)
+			}
+			runDisplayRecord(client, recordTopic)
+		case displayCameraFlags.Name():
+			if err := displayCameraFlags.Parse(os.Args[3:]); err == flag.ErrHelp {
+				displayCameraFlags.PrintDefaults()
+				os.Exit(0)
+			}
+			client, err := cli.Connect(mqttBroker, username, password, clientId)
+			if err != nil {
+				zap.S().Fatalf("unable to connect to mqtt bus: %v", err)
+			}
+			defer client.Disconnect(50)
+			runDisplay(client, framePath, frameTopic, fps, objectsTopic, roadTopic, withObjects, withRoad)
+		default:
+			displayFlags.PrintDefaults()
+			os.Exit(0)
 		}
-		defer client.Disconnect(50)
-		runDisplay(client, framePath, frameTopic, fps, objectsTopic, roadTopic, withObjects, withRoad)
 	case recordFlags.Name():
 		if err := recordFlags.Parse(os.Args[2:]); err == flag.ErrHelp {
 			recordFlags.PrintDefaults()
@@ -200,14 +238,13 @@ func main() {
 				trainingRunFlags.PrintDefaults()
 				os.Exit(0)
 			}
-			runTraining(bucket, ociImage, roleArn, trainJobName, recordsPath, trainSliceSize, withFlipImage, modelPath,
-				trainImageHeight, trainImageWidth, enableSpotTraining)
+			runTraining(bucket, ociImage, roleArn, trainJobName, recordsPath, trainSliceSize, trainImageWidth, trainImageHeight, horizon, withFlipImage, modelPath, enableSpotTraining)
 		case trainArchiveFlags.Name():
 			if err := trainArchiveFlags.Parse(os.Args[3:]); err == flag.ErrHelp {
 				trainArchiveFlags.PrintDefaults()
 				os.Exit(0)
 			}
-			runTrainArchive(recordsPath, trainArchiveName, trainSliceSize, withFlipImage)
+			runTrainArchive(recordsPath, trainArchiveName, trainSliceSize, trainImageWidth, trainImageHeight, horizon, withFlipImage)
 		default:
 			trainingFlags.PrintDefaults()
 			os.Exit(0)
@@ -266,9 +303,9 @@ func runRecord(client mqtt.Client, recordsDir, recordTopic string) {
 	}
 }
 
-func runTrainArchive(basedir, archiveName string, sliceSize int, withFlipImage bool) {
+func runTrainArchive(basedir, archiveName string, sliceSize int, imgWidth, imgHeight int, horizon int, withFlipImage bool) {
 
-	err := data.WriteArchive(basedir, archiveName, sliceSize, withFlipImage)
+	err := data.WriteArchive(basedir, archiveName, sliceSize, imgWidth, imgHeight, horizon, withFlipImage)
 	if err != nil {
 		zap.S().Fatalf("unable to build archive file %v: %v", archiveName, err)
 	}
@@ -283,7 +320,16 @@ func runImportDonkeyRecords(basedir, destdir string) {
 		zap.S().Fatalf("unable to import files from %v to %v: %v", basedir, destdir, err)
 	}
 }
+func runDisplayRecord(client mqtt.Client, recordTopic string){
+	r := display.NewRecordDisplay(client, recordTopic)
+	defer r.Stop()
 
+	cli.HandleExit(r)
+	err := r.Start()
+	if err != nil {
+		zap.S().Fatalf("unable to start service: %v", err)
+	}
+}
 func runDisplay(client mqtt.Client, framePath string, frameTopic string, fps int, objectsTopic string, roadTopic string, withObjects bool, withRoad bool) {
 
 	if framePath != "" {
@@ -310,8 +356,7 @@ func runDisplay(client mqtt.Client, framePath string, frameTopic string, fps int
 	}
 }
 
-func runTraining(bucketName string, ociImage string, roleArn string, jobName, dataDir string, sliceSize int, withFlipImage bool,
-	outputModel string, imgHeight int, imgWidth int, enableSpotTraining bool) {
+func runTraining(bucketName, ociImage, roleArn, jobName, dataDir string, sliceSize, imgWidth, imgHeight int, horizon int, withFlipImage bool, outputModel string, enableSpotTraining bool) {
 
 	l := zap.S()
 	if bucketName == "" {
@@ -335,8 +380,7 @@ func runTraining(bucketName string, ociImage string, roleArn string, jobName, da
 	}
 
 	training := train.New(bucketName, ociImage, roleArn)
-	err := training.TrainDir(context.Background(), jobName, dataDir, imgHeight, imgWidth, sliceSize, withFlipImage,
-		outputModel, enableSpotTraining)
+	err := training.TrainDir(context.Background(), jobName, dataDir, imgWidth, imgHeight, sliceSize, horizon, withFlipImage, outputModel, enableSpotTraining)
 
 	if err != nil {
 		l.Fatalf("unable to run training: %v", err)

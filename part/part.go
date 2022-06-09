@@ -181,6 +181,28 @@ func (p *FramePart) drawRoad(img *gocv.Mat, road *events.RoadMessage) {
 		color.RGBA{R: 255, G: 0, B: 0, A: 128},
 		-1)
 
+	p.drawRoadText(img, road)
+
+}
+func (p *FramePart) drawRoadText(img *gocv.Mat, road *events.RoadMessage) {
+	gocv.PutText(
+		img,
+		fmt.Sprintf("Confidence: %.3f", road.Ellipse.Confidence),
+		image.Point{X: 20, Y: 20},
+		gocv.FontHersheyPlain,
+		1.,
+		color.RGBA{R: 0, G: 255, B: 0, A: 255},
+		1,
+	)
+	gocv.PutText(
+		img,
+		fmt.Sprintf("Angle ellipse: %.3f", road.Ellipse.Angle),
+		image.Point{X: 20, Y: 40},
+		gocv.FontHersheyPlain,
+		1.,
+		color.RGBA{R: 0, G: 255, B: 0, A: 255},
+		1,
+	)
 }
 
 func StopService(name string, client mqtt.Client, topics ...string) {

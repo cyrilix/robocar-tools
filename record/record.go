@@ -33,7 +33,7 @@ type Recorder struct {
 	cancel      chan interface{}
 }
 
-var RecorNameFormat = "record_%s.json"
+var FileNameFormat = "record_%s.json"
 
 func (r *Recorder) Start() error {
 	err := service.RegisterCallback(r.client, r.recordTopic, r.onRecordMsg)
@@ -75,7 +75,7 @@ func (r *Recorder) onRecordMsg(_ mqtt.Client, message mqtt.Message) {
 	}
 
 	jsonDir := fmt.Sprintf("%s/", recordDir)
-	recordName := fmt.Sprintf("%s/%s", jsonDir, fmt.Sprintf(RecorNameFormat, msg.GetFrame().GetId().GetId()))
+	recordName := fmt.Sprintf("%s/%s", jsonDir, fmt.Sprintf(FileNameFormat, msg.GetFrame().GetId().GetId()))
 	err = os.MkdirAll(jsonDir, os.FileMode(0755))
 	if err != nil {
 		l.Errorf("unable to create %v directory: %v", jsonDir, err)
