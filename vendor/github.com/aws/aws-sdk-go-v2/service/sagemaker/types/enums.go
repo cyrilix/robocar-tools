@@ -143,6 +143,14 @@ const (
 	AppInstanceTypeMlR512xlarge   AppInstanceType = "ml.r5.12xlarge"
 	AppInstanceTypeMlR516xlarge   AppInstanceType = "ml.r5.16xlarge"
 	AppInstanceTypeMlR524xlarge   AppInstanceType = "ml.r5.24xlarge"
+	AppInstanceTypeMlG5Xlarge     AppInstanceType = "ml.g5.xlarge"
+	AppInstanceTypeMlG52xlarge    AppInstanceType = "ml.g5.2xlarge"
+	AppInstanceTypeMlG54xlarge    AppInstanceType = "ml.g5.4xlarge"
+	AppInstanceTypeMlG58xlarge    AppInstanceType = "ml.g5.8xlarge"
+	AppInstanceTypeMlG516xlarge   AppInstanceType = "ml.g5.16xlarge"
+	AppInstanceTypeMlG512xlarge   AppInstanceType = "ml.g5.12xlarge"
+	AppInstanceTypeMlG524xlarge   AppInstanceType = "ml.g5.24xlarge"
+	AppInstanceTypeMlG548xlarge   AppInstanceType = "ml.g5.48xlarge"
 )
 
 // Values returns all known values for AppInstanceType. Note that this can be
@@ -199,6 +207,14 @@ func (AppInstanceType) Values() []AppInstanceType {
 		"ml.r5.12xlarge",
 		"ml.r5.16xlarge",
 		"ml.r5.24xlarge",
+		"ml.g5.xlarge",
+		"ml.g5.2xlarge",
+		"ml.g5.4xlarge",
+		"ml.g5.8xlarge",
+		"ml.g5.16xlarge",
+		"ml.g5.12xlarge",
+		"ml.g5.24xlarge",
+		"ml.g5.48xlarge",
 	}
 }
 
@@ -426,6 +442,24 @@ func (AuthMode) Values() []AuthMode {
 	}
 }
 
+type AutoMLChannelType string
+
+// Enum values for AutoMLChannelType
+const (
+	AutoMLChannelTypeTraining   AutoMLChannelType = "training"
+	AutoMLChannelTypeValidation AutoMLChannelType = "validation"
+)
+
+// Values returns all known values for AutoMLChannelType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (AutoMLChannelType) Values() []AutoMLChannelType {
+	return []AutoMLChannelType{
+		"training",
+		"validation",
+	}
+}
+
 type AutoMLJobObjectiveType string
 
 // Enum values for AutoMLJobObjectiveType
@@ -463,6 +497,8 @@ const (
 	AutoMLJobSecondaryStatusExplainabilityError            AutoMLJobSecondaryStatus = "ExplainabilityError"
 	AutoMLJobSecondaryStatusDeployingModel                 AutoMLJobSecondaryStatus = "DeployingModel"
 	AutoMLJobSecondaryStatusModelDeploymentError           AutoMLJobSecondaryStatus = "ModelDeploymentError"
+	AutoMLJobSecondaryStatusGeneratingModelInsightsReport  AutoMLJobSecondaryStatus = "GeneratingModelInsightsReport"
+	AutoMLJobSecondaryStatusModelInsightsError             AutoMLJobSecondaryStatus = "ModelInsightsError"
 )
 
 // Values returns all known values for AutoMLJobSecondaryStatus. Note that this can
@@ -485,6 +521,8 @@ func (AutoMLJobSecondaryStatus) Values() []AutoMLJobSecondaryStatus {
 		"ExplainabilityError",
 		"DeployingModel",
 		"ModelDeploymentError",
+		"GeneratingModelInsightsReport",
+		"ModelInsightsError",
 	}
 }
 
@@ -533,6 +571,48 @@ func (AutoMLMetricEnum) Values() []AutoMLMetricEnum {
 		"F1",
 		"F1macro",
 		"AUC",
+	}
+}
+
+type AutoMLMetricExtendedEnum string
+
+// Enum values for AutoMLMetricExtendedEnum
+const (
+	AutoMLMetricExtendedEnumAccuracy         AutoMLMetricExtendedEnum = "Accuracy"
+	AutoMLMetricExtendedEnumMse              AutoMLMetricExtendedEnum = "MSE"
+	AutoMLMetricExtendedEnumF1               AutoMLMetricExtendedEnum = "F1"
+	AutoMLMetricExtendedEnumF1Macro          AutoMLMetricExtendedEnum = "F1macro"
+	AutoMLMetricExtendedEnumAuc              AutoMLMetricExtendedEnum = "AUC"
+	AutoMLMetricExtendedEnumRmse             AutoMLMetricExtendedEnum = "RMSE"
+	AutoMLMetricExtendedEnumMae              AutoMLMetricExtendedEnum = "MAE"
+	AutoMLMetricExtendedEnumR2               AutoMLMetricExtendedEnum = "R2"
+	AutoMLMetricExtendedEnumBalancedAccuracy AutoMLMetricExtendedEnum = "BalancedAccuracy"
+	AutoMLMetricExtendedEnumPrecision        AutoMLMetricExtendedEnum = "Precision"
+	AutoMLMetricExtendedEnumPrecisionMacro   AutoMLMetricExtendedEnum = "PrecisionMacro"
+	AutoMLMetricExtendedEnumRecall           AutoMLMetricExtendedEnum = "Recall"
+	AutoMLMetricExtendedEnumRecallMacro      AutoMLMetricExtendedEnum = "RecallMacro"
+	AutoMLMetricExtendedEnumLogLoss          AutoMLMetricExtendedEnum = "LogLoss"
+)
+
+// Values returns all known values for AutoMLMetricExtendedEnum. Note that this can
+// be expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (AutoMLMetricExtendedEnum) Values() []AutoMLMetricExtendedEnum {
+	return []AutoMLMetricExtendedEnum{
+		"Accuracy",
+		"MSE",
+		"F1",
+		"F1macro",
+		"AUC",
+		"RMSE",
+		"MAE",
+		"R2",
+		"BalancedAccuracy",
+		"Precision",
+		"PrecisionMacro",
+		"Recall",
+		"RecallMacro",
+		"LogLoss",
 	}
 }
 
@@ -978,6 +1058,26 @@ func (DirectInternetAccess) Values() []DirectInternetAccess {
 	return []DirectInternetAccess{
 		"Enabled",
 		"Disabled",
+	}
+}
+
+type Direction string
+
+// Enum values for Direction
+const (
+	DirectionBoth        Direction = "Both"
+	DirectionAscendants  Direction = "Ascendants"
+	DirectionDescendants Direction = "Descendants"
+)
+
+// Values returns all known values for Direction. Note that this can be expanded in
+// the future, and so it is only as up to date as the client. The ordering of this
+// slice is not guaranteed to be stable across updates.
+func (Direction) Values() []Direction {
+	return []Direction{
+		"Both",
+		"Ascendants",
+		"Descendants",
 	}
 }
 
@@ -1711,6 +1811,14 @@ const (
 	InstanceTypeMlR512xlarge   InstanceType = "ml.r5.12xlarge"
 	InstanceTypeMlR516xlarge   InstanceType = "ml.r5.16xlarge"
 	InstanceTypeMlR524xlarge   InstanceType = "ml.r5.24xlarge"
+	InstanceTypeMlG5Xlarge     InstanceType = "ml.g5.xlarge"
+	InstanceTypeMlG52xlarge    InstanceType = "ml.g5.2xlarge"
+	InstanceTypeMlG54xlarge    InstanceType = "ml.g5.4xlarge"
+	InstanceTypeMlG58xlarge    InstanceType = "ml.g5.8xlarge"
+	InstanceTypeMlG516xlarge   InstanceType = "ml.g5.16xlarge"
+	InstanceTypeMlG512xlarge   InstanceType = "ml.g5.12xlarge"
+	InstanceTypeMlG524xlarge   InstanceType = "ml.g5.24xlarge"
+	InstanceTypeMlG548xlarge   InstanceType = "ml.g5.48xlarge"
 )
 
 // Values returns all known values for InstanceType. Note that this can be expanded
@@ -1779,6 +1887,14 @@ func (InstanceType) Values() []InstanceType {
 		"ml.r5.12xlarge",
 		"ml.r5.16xlarge",
 		"ml.r5.24xlarge",
+		"ml.g5.xlarge",
+		"ml.g5.2xlarge",
+		"ml.g5.4xlarge",
+		"ml.g5.8xlarge",
+		"ml.g5.16xlarge",
+		"ml.g5.12xlarge",
+		"ml.g5.24xlarge",
+		"ml.g5.48xlarge",
 	}
 }
 
@@ -1823,6 +1939,28 @@ func (LabelingJobStatus) Values() []LabelingJobStatus {
 		"Failed",
 		"Stopping",
 		"Stopped",
+	}
+}
+
+type LineageType string
+
+// Enum values for LineageType
+const (
+	LineageTypeTrialComponent LineageType = "TrialComponent"
+	LineageTypeArtifact       LineageType = "Artifact"
+	LineageTypeContext        LineageType = "Context"
+	LineageTypeAction         LineageType = "Action"
+)
+
+// Values returns all known values for LineageType. Note that this can be expanded
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
+func (LineageType) Values() []LineageType {
+	return []LineageType{
+		"TrialComponent",
+		"Artifact",
+		"Context",
+		"Action",
 	}
 }
 
@@ -1887,6 +2025,27 @@ func (ListEdgePackagingJobsSortBy) Values() []ListEdgePackagingJobsSortBy {
 		"CREATION_TIME",
 		"LAST_MODIFIED_TIME",
 		"STATUS",
+	}
+}
+
+type ListInferenceRecommendationsJobsSortBy string
+
+// Enum values for ListInferenceRecommendationsJobsSortBy
+const (
+	ListInferenceRecommendationsJobsSortByName         ListInferenceRecommendationsJobsSortBy = "Name"
+	ListInferenceRecommendationsJobsSortByCreationTime ListInferenceRecommendationsJobsSortBy = "CreationTime"
+	ListInferenceRecommendationsJobsSortByStatus       ListInferenceRecommendationsJobsSortBy = "Status"
+)
+
+// Values returns all known values for ListInferenceRecommendationsJobsSortBy. Note
+// that this can be expanded in the future, and so it is only as up to date as the
+// client. The ordering of this slice is not guaranteed to be stable across
+// updates.
+func (ListInferenceRecommendationsJobsSortBy) Values() []ListInferenceRecommendationsJobsSortBy {
+	return []ListInferenceRecommendationsJobsSortBy{
+		"Name",
+		"CreationTime",
+		"Status",
 	}
 }
 
@@ -1998,6 +2157,28 @@ func (ModelCacheSetting) Values() []ModelCacheSetting {
 	return []ModelCacheSetting{
 		"Enabled",
 		"Disabled",
+	}
+}
+
+type ModelMetadataFilterType string
+
+// Enum values for ModelMetadataFilterType
+const (
+	ModelMetadataFilterTypeDomain           ModelMetadataFilterType = "Domain"
+	ModelMetadataFilterTypeFramework        ModelMetadataFilterType = "Framework"
+	ModelMetadataFilterTypeTask             ModelMetadataFilterType = "Task"
+	ModelMetadataFilterTypeFrameworkversion ModelMetadataFilterType = "FrameworkVersion"
+)
+
+// Values returns all known values for ModelMetadataFilterType. Note that this can
+// be expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (ModelMetadataFilterType) Values() []ModelMetadataFilterType {
+	return []ModelMetadataFilterType{
+		"Domain",
+		"Framework",
+		"Task",
+		"FrameworkVersion",
 	}
 }
 
@@ -3030,6 +3211,50 @@ func (ProjectStatus) Values() []ProjectStatus {
 	}
 }
 
+type RecommendationJobStatus string
+
+// Enum values for RecommendationJobStatus
+const (
+	RecommendationJobStatusPending    RecommendationJobStatus = "PENDING"
+	RecommendationJobStatusInProgress RecommendationJobStatus = "IN_PROGRESS"
+	RecommendationJobStatusCompleted  RecommendationJobStatus = "COMPLETED"
+	RecommendationJobStatusFailed     RecommendationJobStatus = "FAILED"
+	RecommendationJobStatusStopping   RecommendationJobStatus = "STOPPING"
+	RecommendationJobStatusStopped    RecommendationJobStatus = "STOPPED"
+)
+
+// Values returns all known values for RecommendationJobStatus. Note that this can
+// be expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (RecommendationJobStatus) Values() []RecommendationJobStatus {
+	return []RecommendationJobStatus{
+		"PENDING",
+		"IN_PROGRESS",
+		"COMPLETED",
+		"FAILED",
+		"STOPPING",
+		"STOPPED",
+	}
+}
+
+type RecommendationJobType string
+
+// Enum values for RecommendationJobType
+const (
+	RecommendationJobTypeDefault  RecommendationJobType = "Default"
+	RecommendationJobTypeAdvanced RecommendationJobType = "Advanced"
+)
+
+// Values returns all known values for RecommendationJobType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (RecommendationJobType) Values() []RecommendationJobType {
+	return []RecommendationJobType{
+		"Default",
+		"Advanced",
+	}
+}
+
 type RecordWrapper string
 
 // Enum values for RecordWrapper
@@ -3500,6 +3725,24 @@ func (SortExperimentsBy) Values() []SortExperimentsBy {
 	}
 }
 
+type SortLineageGroupsBy string
+
+// Enum values for SortLineageGroupsBy
+const (
+	SortLineageGroupsByName         SortLineageGroupsBy = "Name"
+	SortLineageGroupsByCreationTime SortLineageGroupsBy = "CreationTime"
+)
+
+// Values returns all known values for SortLineageGroupsBy. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (SortLineageGroupsBy) Values() []SortLineageGroupsBy {
+	return []SortLineageGroupsBy{
+		"Name",
+		"CreationTime",
+	}
+}
+
 type SortOrder string
 
 // Enum values for SortOrder
@@ -3704,6 +3947,7 @@ const (
 	TargetDeviceQcs605        TargetDevice = "qcs605"
 	TargetDeviceQcs603        TargetDevice = "qcs603"
 	TargetDeviceSitaraAm57x   TargetDevice = "sitara_am57x"
+	TargetDeviceAmbaCv2       TargetDevice = "amba_cv2"
 	TargetDeviceAmbaCv22      TargetDevice = "amba_cv22"
 	TargetDeviceAmbaCv25      TargetDevice = "amba_cv25"
 	TargetDeviceX86Win32      TargetDevice = "x86_win32"
@@ -3742,6 +3986,7 @@ func (TargetDevice) Values() []TargetDevice {
 		"qcs605",
 		"qcs603",
 		"sitara_am57x",
+		"amba_cv2",
 		"amba_cv22",
 		"amba_cv25",
 		"x86_win32",
@@ -3759,6 +4004,7 @@ const (
 	TargetPlatformAcceleratorIntelGraphics TargetPlatformAccelerator = "INTEL_GRAPHICS"
 	TargetPlatformAcceleratorMali          TargetPlatformAccelerator = "MALI"
 	TargetPlatformAcceleratorNvidia        TargetPlatformAccelerator = "NVIDIA"
+	TargetPlatformAcceleratorNna           TargetPlatformAccelerator = "NNA"
 )
 
 // Values returns all known values for TargetPlatformAccelerator. Note that this
@@ -3769,6 +4015,7 @@ func (TargetPlatformAccelerator) Values() []TargetPlatformAccelerator {
 		"INTEL_GRAPHICS",
 		"MALI",
 		"NVIDIA",
+		"NNA",
 	}
 }
 
@@ -3831,6 +4078,22 @@ func (TrafficRoutingConfigType) Values() []TrafficRoutingConfigType {
 		"ALL_AT_ONCE",
 		"CANARY",
 		"LINEAR",
+	}
+}
+
+type TrafficType string
+
+// Enum values for TrafficType
+const (
+	TrafficTypePhases TrafficType = "PHASES"
+)
+
+// Values returns all known values for TrafficType. Note that this can be expanded
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
+func (TrafficType) Values() []TrafficType {
+	return []TrafficType{
+		"PHASES",
 	}
 }
 
@@ -3897,6 +4160,14 @@ const (
 	TrainingInstanceTypeMlC5n4xlarge   TrainingInstanceType = "ml.c5n.4xlarge"
 	TrainingInstanceTypeMlC5n9xlarge   TrainingInstanceType = "ml.c5n.9xlarge"
 	TrainingInstanceTypeMlC5n18xlarge  TrainingInstanceType = "ml.c5n.18xlarge"
+	TrainingInstanceTypeMlG5Xlarge     TrainingInstanceType = "ml.g5.xlarge"
+	TrainingInstanceTypeMlG52xlarge    TrainingInstanceType = "ml.g5.2xlarge"
+	TrainingInstanceTypeMlG54xlarge    TrainingInstanceType = "ml.g5.4xlarge"
+	TrainingInstanceTypeMlG58xlarge    TrainingInstanceType = "ml.g5.8xlarge"
+	TrainingInstanceTypeMlG516xlarge   TrainingInstanceType = "ml.g5.16xlarge"
+	TrainingInstanceTypeMlG512xlarge   TrainingInstanceType = "ml.g5.12xlarge"
+	TrainingInstanceTypeMlG524xlarge   TrainingInstanceType = "ml.g5.24xlarge"
+	TrainingInstanceTypeMlG548xlarge   TrainingInstanceType = "ml.g5.48xlarge"
 )
 
 // Values returns all known values for TrainingInstanceType. Note that this can be
@@ -3943,6 +4214,14 @@ func (TrainingInstanceType) Values() []TrainingInstanceType {
 		"ml.c5n.4xlarge",
 		"ml.c5n.9xlarge",
 		"ml.c5n.18xlarge",
+		"ml.g5.xlarge",
+		"ml.g5.2xlarge",
+		"ml.g5.4xlarge",
+		"ml.g5.8xlarge",
+		"ml.g5.16xlarge",
+		"ml.g5.12xlarge",
+		"ml.g5.24xlarge",
+		"ml.g5.48xlarge",
 	}
 }
 

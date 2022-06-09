@@ -12,14 +12,14 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Creates a model package that you can use to create Amazon SageMaker models or
-// list on Amazon Web Services Marketplace, or a versioned model that is part of a
-// model group. Buyers can subscribe to model packages listed on Amazon Web
-// Services Marketplace to create models in Amazon SageMaker. To create a model
-// package by specifying a Docker container that contains your inference code and
-// the Amazon S3 location of your model artifacts, provide values for
-// InferenceSpecification. To create a model from an algorithm resource that you
-// created or subscribed to in Amazon Web Services Marketplace, provide a value for
+// Creates a model package that you can use to create SageMaker models or list on
+// Amazon Web Services Marketplace, or a versioned model that is part of a model
+// group. Buyers can subscribe to model packages listed on Amazon Web Services
+// Marketplace to create models in SageMaker. To create a model package by
+// specifying a Docker container that contains your inference code and the Amazon
+// S3 location of your model artifacts, provide values for InferenceSpecification.
+// To create a model from an algorithm resource that you created or subscribed to
+// in Amazon Web Services Marketplace, provide a value for
 // SourceAlgorithmSpecification. There are two types of model packages:
 //
 // *
@@ -44,6 +44,12 @@ func (c *Client) CreateModelPackage(ctx context.Context, params *CreateModelPack
 
 type CreateModelPackageInput struct {
 
+	// An array of additional Inference Specification objects. Each additional
+	// Inference Specification specifies artifacts based on this model package that can
+	// be used on inference endpoints. Generally used with SageMaker Neo to store the
+	// compiled artifacts.
+	AdditionalInferenceSpecifications []types.AdditionalInferenceSpecificationDefinition
+
 	// Whether to certify the model package for listing on Amazon Web Services
 	// Marketplace. This parameter is optional for unversioned models, and does not
 	// apply to versioned models.
@@ -54,6 +60,18 @@ type CreateModelPackageInput struct {
 
 	// The metadata properties associated with the model package versions.
 	CustomerMetadataProperties map[string]string
+
+	// The machine learning domain of your model package and its components. Common
+	// machine learning domains include computer vision and natural language
+	// processing.
+	Domain *string
+
+	// Represents the drift check baselines that can be used when the model monitor is
+	// set using the model package. For more information, see the topic on Drift
+	// Detection against Previous Baselines in SageMaker Pipelines
+	// (https://docs.aws.amazon.com/sagemaker/latest/dg/pipelines-quality-clarify-baseline-lifecycle.html#pipelines-quality-clarify-baseline-drift-detection)
+	// in the Amazon SageMaker Developer Guide.
+	DriftCheckBaselines *types.DriftCheckBaselines
 
 	// Specifies details about inference jobs that can be run with models based on this
 	// model package, including the following:
@@ -93,6 +111,11 @@ type CreateModelPackageInput struct {
 	// unversioned models. It is not applicable to versioned models.
 	ModelPackageName *string
 
+	// The Amazon Simple Storage Service (Amazon S3) path where the sample payload are
+	// stored. This path must point to a single gzip compressed tar archive (.tar.gz
+	// suffix).
+	SamplePayloadUrl *string
+
 	// Details about the algorithm that was used to create the model package.
 	SourceAlgorithmSpecification *types.SourceAlgorithmSpecification
 
@@ -102,8 +125,16 @@ type CreateModelPackageInput struct {
 	// Web Services General Reference Guide.
 	Tags []types.Tag
 
-	// Specifies configurations for one or more transform jobs that Amazon SageMaker
-	// runs to test the model package.
+	// The machine learning task your model package accomplishes. Common machine
+	// learning tasks include object detection and image classification. The following
+	// tasks are supported by Inference Recommender: "IMAGE_CLASSIFICATION" |
+	// "OBJECT_DETECTION" | "TEXT_GENERATION" |"IMAGE_SEGMENTATION" | "FILL_MASK" |
+	// "CLASSIFICATION" | "REGRESSION" | "OTHER". Specify "OTHER" if none of the tasks
+	// listed fit your use case.
+	Task *string
+
+	// Specifies configurations for one or more transform jobs that SageMaker runs to
+	// test the model package.
 	ValidationSpecification *types.ModelPackageValidationSpecification
 
 	noSmithyDocumentSerde

@@ -11,22 +11,21 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Creates an endpoint configuration that Amazon SageMaker hosting services uses to
-// deploy models. In the configuration, you identify one or more models, created
-// using the CreateModel API, to deploy and the resources that you want Amazon
-// SageMaker to provision. Then you call the CreateEndpoint API. Use this API if
-// you want to use Amazon SageMaker hosting services to deploy models into
-// production. In the request, you define a ProductionVariant, for each model that
-// you want to deploy. Each ProductionVariant parameter also describes the
-// resources that you want Amazon SageMaker to provision. This includes the number
-// and type of ML compute instances to deploy. If you are hosting multiple models,
-// you also assign a VariantWeight to specify how much traffic you want to allocate
-// to each model. For example, suppose that you want to host two models, A and B,
-// and you assign traffic weight 2 for model A and 1 for model B. Amazon SageMaker
-// distributes two-thirds of the traffic to Model A, and one-third to model B. When
-// you call CreateEndpoint, a load call is made to DynamoDB to verify that your
-// endpoint configuration exists. When you read data from a DynamoDB table
-// supporting Eventually Consistent Reads
+// Creates an endpoint configuration that SageMaker hosting services uses to deploy
+// models. In the configuration, you identify one or more models, created using the
+// CreateModel API, to deploy and the resources that you want SageMaker to
+// provision. Then you call the CreateEndpoint API. Use this API if you want to use
+// SageMaker hosting services to deploy models into production. In the request, you
+// define a ProductionVariant, for each model that you want to deploy. Each
+// ProductionVariant parameter also describes the resources that you want SageMaker
+// to provision. This includes the number and type of ML compute instances to
+// deploy. If you are hosting multiple models, you also assign a VariantWeight to
+// specify how much traffic you want to allocate to each model. For example,
+// suppose that you want to host two models, A and B, and you assign traffic weight
+// 2 for model A and 1 for model B. SageMaker distributes two-thirds of the traffic
+// to Model A, and one-third to model B. When you call CreateEndpoint, a load call
+// is made to DynamoDB to verify that your endpoint configuration exists. When you
+// read data from a DynamoDB table supporting Eventually Consistent Reads
 // (https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.ReadConsistency.html),
 // the response might not reflect the results of a recently completed write
 // operation. The response might include some stale data. If the dependent entities
@@ -67,15 +66,15 @@ type CreateEndpointConfigInput struct {
 	// Specifies configuration for how an endpoint performs asynchronous inference.
 	// This is a required field in order for your Endpoint to be invoked using
 	// InvokeEndpointAsync
-	// (https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_runtime_InvokeEndpoint.html).
+	// (https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_runtime_InvokeEndpointAsync.html).
 	AsyncInferenceConfig *types.AsyncInferenceConfig
 
-	//
+	// Configuration to control how SageMaker captures inference data.
 	DataCaptureConfig *types.DataCaptureConfig
 
 	// The Amazon Resource Name (ARN) of a Amazon Web Services Key Management Service
-	// key that Amazon SageMaker uses to encrypt data on the storage volume attached to
-	// the ML compute instance that hosts the endpoint. The KmsKeyId can be any of the
+	// key that SageMaker uses to encrypt data on the storage volume attached to the ML
+	// compute instance that hosts the endpoint. The KmsKeyId can be any of the
 	// following formats:
 	//
 	// * Key ID: 1234abcd-12ab-34cd-56ef-1234567890ab

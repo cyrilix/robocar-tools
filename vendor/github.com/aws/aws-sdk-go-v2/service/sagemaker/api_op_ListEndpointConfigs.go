@@ -67,8 +67,8 @@ type ListEndpointConfigsOutput struct {
 	// This member is required.
 	EndpointConfigs []types.EndpointConfigSummary
 
-	// If the response is truncated, Amazon SageMaker returns this token. To retrieve
-	// the next set of endpoint configurations, use it in the subsequent request
+	// If the response is truncated, SageMaker returns this token. To retrieve the next
+	// set of endpoint configurations, use it in the subsequent request
 	NextToken *string
 
 	// Metadata pertaining to the operation's result.
@@ -185,12 +185,13 @@ func NewListEndpointConfigsPaginator(client ListEndpointConfigsAPIClient, params
 		client:    client,
 		params:    params,
 		firstPage: true,
+		nextToken: params.NextToken,
 	}
 }
 
 // HasMorePages returns a boolean indicating whether more pages are available
 func (p *ListEndpointConfigsPaginator) HasMorePages() bool {
-	return p.firstPage || p.nextToken != nil
+	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
 }
 
 // NextPage retrieves the next ListEndpointConfigs page.
@@ -217,7 +218,10 @@ func (p *ListEndpointConfigsPaginator) NextPage(ctx context.Context, optFns ...f
 	prevToken := p.nextToken
 	p.nextToken = result.NextToken
 
-	if p.options.StopOnDuplicateToken && prevToken != nil && p.nextToken != nil && *prevToken == *p.nextToken {
+	if p.options.StopOnDuplicateToken &&
+		prevToken != nil &&
+		p.nextToken != nil &&
+		*prevToken == *p.nextToken {
 		p.nextToken = nil
 	}
 

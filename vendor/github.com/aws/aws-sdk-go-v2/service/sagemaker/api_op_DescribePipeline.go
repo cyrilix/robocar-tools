@@ -41,14 +41,14 @@ type DescribePipelineInput struct {
 type DescribePipelineOutput struct {
 
 	// Information about the user who created or modified an experiment, trial, trial
-	// component, or project.
+	// component, lineage group, or project.
 	CreatedBy *types.UserContext
 
 	// The time when the pipeline was created.
 	CreationTime *time.Time
 
 	// Information about the user who created or modified an experiment, trial, trial
-	// component, or project.
+	// component, lineage group, or project.
 	LastModifiedBy *types.UserContext
 
 	// The time when the pipeline was last modified.
@@ -56,6 +56,9 @@ type DescribePipelineOutput struct {
 
 	// The time when the pipeline was last run.
 	LastRunTime *time.Time
+
+	// Lists the parallelism configuration applied to the pipeline.
+	ParallelismConfiguration *types.ParallelismConfiguration
 
 	// The Amazon Resource Name (ARN) of the pipeline.
 	PipelineArn *string

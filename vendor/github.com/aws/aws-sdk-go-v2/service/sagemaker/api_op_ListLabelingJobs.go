@@ -76,8 +76,8 @@ type ListLabelingJobsOutput struct {
 	// An array of LabelingJobSummary objects, each describing a labeling job.
 	LabelingJobSummaryList []types.LabelingJobSummary
 
-	// If the response is truncated, Amazon SageMaker returns this token. To retrieve
-	// the next set of labeling jobs, use it in the subsequent request.
+	// If the response is truncated, SageMaker returns this token. To retrieve the next
+	// set of labeling jobs, use it in the subsequent request.
 	NextToken *string
 
 	// Metadata pertaining to the operation's result.
@@ -193,12 +193,13 @@ func NewListLabelingJobsPaginator(client ListLabelingJobsAPIClient, params *List
 		client:    client,
 		params:    params,
 		firstPage: true,
+		nextToken: params.NextToken,
 	}
 }
 
 // HasMorePages returns a boolean indicating whether more pages are available
 func (p *ListLabelingJobsPaginator) HasMorePages() bool {
-	return p.firstPage || p.nextToken != nil
+	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
 }
 
 // NextPage retrieves the next ListLabelingJobs page.
@@ -225,7 +226,10 @@ func (p *ListLabelingJobsPaginator) NextPage(ctx context.Context, optFns ...func
 	prevToken := p.nextToken
 	p.nextToken = result.NextToken
 
-	if p.options.StopOnDuplicateToken && prevToken != nil && p.nextToken != nil && *prevToken == *p.nextToken {
+	if p.options.StopOnDuplicateToken &&
+		prevToken != nil &&
+		p.nextToken != nil &&
+		*prevToken == *p.nextToken {
 		p.nextToken = nil
 	}
 

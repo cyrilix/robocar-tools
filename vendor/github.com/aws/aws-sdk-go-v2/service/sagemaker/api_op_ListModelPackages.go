@@ -50,16 +50,17 @@ type ListModelPackagesInput struct {
 	// group.
 	ModelPackageGroupName *string
 
-	// A filter that returns onlyl the model packages of the specified type. This can
-	// be one of the following values.
+	// A filter that returns only the model packages of the specified type. This can be
+	// one of the following values.
 	//
-	// * VERSIONED - List only versioned models.
+	// * UNVERSIONED - List only unversioined models.
+	// This is the default value if no ModelPackageType is specified.
 	//
-	// *
-	// UNVERSIONED - List only unversioined models.
+	// * VERSIONED -
+	// List only versioned models.
 	//
-	// * BOTH - List both versioned and
-	// unversioned models.
+	// * BOTH - List both versioned and unversioned
+	// models.
 	ModelPackageType types.ModelPackageType
 
 	// A string in the model package name. This filter returns only model packages
@@ -87,8 +88,8 @@ type ListModelPackagesOutput struct {
 	// This member is required.
 	ModelPackageSummaryList []types.ModelPackageSummary
 
-	// If the response is truncated, Amazon SageMaker returns this token. To retrieve
-	// the next set of model packages, use it in the subsequent request.
+	// If the response is truncated, SageMaker returns this token. To retrieve the next
+	// set of model packages, use it in the subsequent request.
 	NextToken *string
 
 	// Metadata pertaining to the operation's result.
@@ -204,12 +205,13 @@ func NewListModelPackagesPaginator(client ListModelPackagesAPIClient, params *Li
 		client:    client,
 		params:    params,
 		firstPage: true,
+		nextToken: params.NextToken,
 	}
 }
 
 // HasMorePages returns a boolean indicating whether more pages are available
 func (p *ListModelPackagesPaginator) HasMorePages() bool {
-	return p.firstPage || p.nextToken != nil
+	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
 }
 
 // NextPage retrieves the next ListModelPackages page.
@@ -236,7 +238,10 @@ func (p *ListModelPackagesPaginator) NextPage(ctx context.Context, optFns ...fun
 	prevToken := p.nextToken
 	p.nextToken = result.NextToken
 
-	if p.options.StopOnDuplicateToken && prevToken != nil && p.nextToken != nil && *prevToken == *p.nextToken {
+	if p.options.StopOnDuplicateToken &&
+		prevToken != nil &&
+		p.nextToken != nil &&
+		*prevToken == *p.nextToken {
 		p.nextToken = nil
 	}
 

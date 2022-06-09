@@ -13,8 +13,8 @@ import (
 	"time"
 )
 
-// Returns a list of the Amazon SageMaker notebook instances in the requester's
-// account in an Amazon Web Services Region.
+// Returns a list of the SageMaker notebook instances in the requester's account in
+// an Amazon Web Services Region.
 func (c *Client) ListNotebookInstances(ctx context.Context, params *ListNotebookInstancesInput, optFns ...func(*Options)) (*ListNotebookInstancesOutput, error) {
 	if params == nil {
 		params = &ListNotebookInstancesInput{}
@@ -93,8 +93,8 @@ type ListNotebookInstancesInput struct {
 type ListNotebookInstancesOutput struct {
 
 	// If the response to the previous ListNotebookInstances request was truncated,
-	// Amazon SageMaker returns this token. To retrieve the next set of notebook
-	// instances, use the token in the next request.
+	// SageMaker returns this token. To retrieve the next set of notebook instances,
+	// use the token in the next request.
 	NextToken *string
 
 	// An array of NotebookInstanceSummary objects, one for each notebook instance.
@@ -214,12 +214,13 @@ func NewListNotebookInstancesPaginator(client ListNotebookInstancesAPIClient, pa
 		client:    client,
 		params:    params,
 		firstPage: true,
+		nextToken: params.NextToken,
 	}
 }
 
 // HasMorePages returns a boolean indicating whether more pages are available
 func (p *ListNotebookInstancesPaginator) HasMorePages() bool {
-	return p.firstPage || p.nextToken != nil
+	return p.firstPage || (p.nextToken != nil && len(*p.nextToken) != 0)
 }
 
 // NextPage retrieves the next ListNotebookInstances page.
@@ -246,7 +247,10 @@ func (p *ListNotebookInstancesPaginator) NextPage(ctx context.Context, optFns ..
 	prevToken := p.nextToken
 	p.nextToken = result.NextToken
 
-	if p.options.StopOnDuplicateToken && prevToken != nil && p.nextToken != nil && *prevToken == *p.nextToken {
+	if p.options.StopOnDuplicateToken &&
+		prevToken != nil &&
+		p.nextToken != nil &&
+		*prevToken == *p.nextToken {
 		p.nextToken = nil
 	}
 

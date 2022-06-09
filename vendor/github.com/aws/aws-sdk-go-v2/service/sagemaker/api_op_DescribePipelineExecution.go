@@ -41,7 +41,7 @@ type DescribePipelineExecutionInput struct {
 type DescribePipelineExecutionOutput struct {
 
 	// Information about the user who created or modified an experiment, trial, trial
-	// component, or project.
+	// component, lineage group, or project.
 	CreatedBy *types.UserContext
 
 	// The time when the pipeline execution was created.
@@ -51,11 +51,14 @@ type DescribePipelineExecutionOutput struct {
 	FailureReason *string
 
 	// Information about the user who created or modified an experiment, trial, trial
-	// component, or project.
+	// component, lineage group, or project.
 	LastModifiedBy *types.UserContext
 
 	// The time when the pipeline execution was modified last.
 	LastModifiedTime *time.Time
+
+	// The parallelism configuration applied to the pipeline.
+	ParallelismConfiguration *types.ParallelismConfiguration
 
 	// The Amazon Resource Name (ARN) of the pipeline.
 	PipelineArn *string
