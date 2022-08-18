@@ -96,7 +96,6 @@ func (r *Record) drawRecord(rec *events.RecordMessage, objects *events.ObjectsMe
 	r.window.WaitKey(1)
 }
 
-
 func (r *Record) drawSteering(img *gocv.Mat, steering float32) {
 	gocv.PutText(
 		img,

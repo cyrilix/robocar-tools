@@ -20,10 +20,10 @@ func ListModels(ctx context.Context, bucket string) error {
 	outputs, err := client.ListObjectsV2(
 		ctx,
 		&s3.ListObjectsV2Input{
-			Bucket:              aws.String(bucket),
-			Prefix:              aws.String("output"),
+			Bucket: aws.String(bucket),
+			Prefix: aws.String("output"),
 		},
-		)
+	)
 	if err != nil {
 		return fmt.Errorf("unable to list models in bucket %v: %w", bucket, err)
 	}
@@ -38,7 +38,7 @@ func DownloadArchive(ctx context.Context, bucketName, modelPath string) ([]byte,
 	l := zap.S().With(
 		"bucket", bucketName,
 		"model", modelPath,
-		)
+	)
 	client := s3.NewFromConfig(awsutils.MustLoadConfig())
 
 	l.Debug("download model")
@@ -46,8 +46,8 @@ func DownloadArchive(ctx context.Context, bucketName, modelPath string) ([]byte,
 		ctx,
 
 		&s3.GetObjectInput{
-			Bucket:                     aws.String(bucketName),
-			Key:                        aws.String(modelPath),
+			Bucket: aws.String(bucketName),
+			Key:    aws.String(modelPath),
 		})
 	if err != nil {
 		return nil, fmt.Errorf("unable to download model: %w", err)

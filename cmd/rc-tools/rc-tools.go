@@ -55,12 +55,11 @@ func main() {
 	cli.SetDefaultValueFromEnv(&ociImage, "TRAIN_OCI_IMAGE", "")
 	cli.SetDefaultValueFromEnv(&bucket, "TRAIN_BUCKET", "")
 
-
 	flag.BoolVar(&debug, "debug", false, "Display debug logs")
 
 	displayFlags := flag.NewFlagSet("display", flag.ExitOnError)
 
-	displayFlags.Usage = func(){
+	displayFlags.Usage = func() {
 		fmt.Printf("Usage of %s %s:\n", os.Args[0], displayFlags.Name())
 		fmt.Printf("  camera\n  \tLive from car camera\n")
 		fmt.Printf("  record\n  \tLive from published records\n")
@@ -87,15 +86,13 @@ func main() {
 	recordFlags.StringVar(&recordTopic, "mqtt-topic-records", os.Getenv("MQTT_TOPIC_RECORDS"), "Mqtt topic that contains record data for training, use MQTT_TOPIC_RECORDS if args not set")
 	recordFlags.StringVar(&recordsPath, "record-path", os.Getenv("RECORD_PATH"), "Path where to write records files, use RECORD_PATH if args not set")
 
-
 	var basedir, destdir string
 	impdkFlags := flag.NewFlagSet("import-donkey-records", flag.ExitOnError)
 	impdkFlags.StringVar(&basedir, "from", "", "source directory")
 	impdkFlags.StringVar(&destdir, "to", "", "destination directory")
 
-
 	trainingFlags := flag.NewFlagSet("training", flag.ExitOnError)
-	trainingFlags.Usage = func(){
+	trainingFlags.Usage = func() {
 		fmt.Printf("Usage of %s %s:\n", os.Args[0], trainingFlags.Name())
 		fmt.Printf("  list\n  \tList existing training jobs\n")
 		fmt.Printf("  archive\n  \tBuild tar.gz archive for training\n")
@@ -132,7 +129,6 @@ func main() {
 	trainArchiveFlags.IntVar(&trainImageHeight, "image-height", 0, "Resize image height")
 	trainArchiveFlags.IntVar(&horizon, "horizon", 0, "Upper zone image to crop (in pixels)")
 	trainArchiveFlags.BoolVar(&withFlipImage, "with-flip-image", withFlipImage, "Flip horiontal image and reverse steering to increase data into training archive")
-
 
 	modelsFlags := flag.NewFlagSet("models", flag.ExitOnError)
 	modelsFlags.Usage = func() {
@@ -228,7 +224,7 @@ func main() {
 		}
 		switch trainingFlags.Arg(0) {
 		case trainingListJobFlags.Name():
-			if err:= trainingListJobFlags.Parse(os.Args[3:]); err == flag.ErrHelp {
+			if err := trainingListJobFlags.Parse(os.Args[3:]); err == flag.ErrHelp {
 				trainingListJobFlags.PrintDefaults()
 				os.Exit(0)
 			}
@@ -249,7 +245,6 @@ func main() {
 			trainingFlags.PrintDefaults()
 			os.Exit(0)
 
-
 		}
 	case modelsFlags.Name():
 
@@ -259,13 +254,13 @@ func main() {
 		}
 		switch modelsFlags.Arg(0) {
 		case modelsListFlags.Name():
-			if err:= modelsListFlags.Parse(os.Args[3:]); err == flag.ErrHelp {
+			if err := modelsListFlags.Parse(os.Args[3:]); err == flag.ErrHelp {
 				modelsListFlags.PrintDefaults()
 				os.Exit(0)
 			}
 			runModelsList(bucket)
 		case modelsDownloadFlags.Name():
-			if err:= modelsDownloadFlags.Parse(os.Args[3:]); err == flag.ErrHelp {
+			if err := modelsDownloadFlags.Parse(os.Args[3:]); err == flag.ErrHelp {
 				modelsDownloadFlags.PrintDefaults()
 				os.Exit(0)
 			}
@@ -320,7 +315,7 @@ func runImportDonkeyRecords(basedir, destdir string) {
 		zap.S().Fatalf("unable to import files from %v to %v: %v", basedir, destdir, err)
 	}
 }
-func runDisplayRecord(client mqtt.Client, recordTopic string){
+func runDisplayRecord(client mqtt.Client, recordTopic string) {
 	r := display.NewRecordDisplay(client, recordTopic)
 	defer r.Stop()
 

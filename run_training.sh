@@ -6,8 +6,8 @@ set +x
 RECORDS_PATH=~/robocar/record-sim4-2
 #TRAINING_OPTS="--horizon=20"
 TRAINING_OPTS=""
-#MODEL_TYPE="categorical"
-MODEL_TYPE="linear"
+MODEL_TYPE="categorical"
+#MODEL_TYPE="linear"
 IMG_WIDTH=160
 IMG_HEIGHT=120
 HORIZON=20

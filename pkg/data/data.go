@@ -203,7 +203,7 @@ func addJsonFiles(recordFiles []string, imgCam []string, flipImage bool, w *zip.
 		if flipImage {
 			rcd.UserAngle = rcd.UserAngle * -1
 			rcd.CamImageArray = fmt.Sprintf("flip_%s", camName)
-		}else {
+		} else {
 			rcd.CamImageArray = camName
 		}
 

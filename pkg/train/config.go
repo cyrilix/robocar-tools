@@ -1,6 +1,5 @@
 package train
 
 const (
-	prefixInput  = "input/data/train/"
+	prefixInput = "input/data/train/"
 )
-

@@ -65,3 +65,10 @@ Usage of record:
   -record-json-path string
         Path where to write json files, use RECORD_JSON_PATH if args not set
 ```
+
+## Useful
+
+Debug record:
+
+    go run ./cmd/rc-tools display record -mqtt-broker tcp://diabolo.local:1883 -mqtt-username satanas -mqtt-password satanas -mqtt-client-id display-record -mqtt-topic-records car/satanas/part/records
+
