@@ -111,7 +111,7 @@ github.com/aws/smithy-go/waiter
 ## explicit; go 1.18
 github.com/cyrilix/robocar-base/cli
 github.com/cyrilix/robocar-base/service
-# github.com/cyrilix/robocar-protobuf/go v1.0.5
+# github.com/cyrilix/robocar-protobuf/go v1.1.0
 ## explicit; go 1.18
 github.com/cyrilix/robocar-protobuf/go/events
 # github.com/disintegration/imaging v1.6.2

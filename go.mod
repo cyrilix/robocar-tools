@@ -8,7 +8,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.26.11
 	github.com/aws/aws-sdk-go-v2/service/sagemaker v1.32.1
 	github.com/cyrilix/robocar-base v0.1.7
-	github.com/cyrilix/robocar-protobuf/go v1.0.5
+	github.com/cyrilix/robocar-protobuf/go v1.1.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/eclipse/paho.mqtt.golang v1.4.1
 	github.com/golang/protobuf v1.5.2

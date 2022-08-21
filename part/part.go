@@ -11,6 +11,7 @@ import (
 	"image"
 	"image/color"
 	"log"
+	"time"
 )
 
 func NewPart(client mqtt.Client, frameTopic, objectsTopic, roadTopic string, withObjects, withRoad bool) *FramePart {
@@ -52,9 +53,11 @@ func (p *FramePart) Start() error {
 	var img = gocv.NewMat()
 	var objectsMsg events.ObjectsMessage
 	var roadMsg events.RoadMessage
-
+	ticker := time.NewTicker(1 * time.Second)
 	for {
 		select {
+		case <-ticker.C:
+			img = gocv.NewMatWithSize(120, 120, gocv.MatTypeCV8S)
 		case newImg := <-p.imgChan:
 			img.Close()
 			img = newImg
@@ -67,6 +70,7 @@ func (p *FramePart) Start() error {
 			return nil
 		}
 		p.drawFrame(&img, &objectsMsg, &roadMsg)
+		ticker.Reset(1 * time.Second)
 	}
 }
 
@@ -105,6 +109,7 @@ func (p *FramePart) onObjects(_ mqtt.Client, message mqtt.Message) {
 		return
 	}
 
+	zap.S().Infow("new objects", zap.String("topic", message.Topic()), zap.String("object", msg.Objects[0].String()))
 	p.objectsChan <- msg
 }
 
@@ -156,11 +161,17 @@ func (p *FramePart) drawFrame(img *gocv.Mat, objects *events.ObjectsMessage, roa
 }
 
 func (p *FramePart) drawObjects(img *gocv.Mat, objects *events.ObjectsMessage) {
+	zap.S().Debugf("draw object %v", objects)
 	for _, obj := range objects.GetObjects() {
 		gocv.Rectangle(
 			img,
-			image.Rect(int(obj.GetLeft()), int(obj.GetTop()), int(obj.GetRight()), int(obj.GetBottom())),
-			color.RGBA{0, 255, 0, 0},
+			image.Rect(
+				int(obj.GetLeft()*float32(img.Cols())),
+				int(obj.GetTop()*float32(img.Rows())),
+				int(obj.GetRight()*float32(img.Cols())),
+				int(obj.GetBottom()*float32(img.Rows())),
+			),
+			color.RGBA{R: 0, G: 255, B: 0, A: 0},
 			2)
 	}
 }
