@@ -28,8 +28,8 @@ func main() {
 	var mqttBroker, username, password, clientId string
 	var framePath string
 	var fps int
-	var frameTopic, objectsTopic, roadTopic, recordTopic string
-	var withObjects, withRoad bool
+	var frameTopic, objectsTopic, roadTopic, recordTopic, throttleFeedbackTopic string
+	var withObjects, withRoad, withThrottleFeedback bool
 	var recordsPath string
 	var trainArchiveName string
 	var trainSliceSize int
@@ -80,6 +80,9 @@ func main() {
 
 	displayCameraFlags.StringVar(&roadTopic, "mqtt-topic-road", os.Getenv("MQTT_TOPIC_ROAD"), "Mqtt topic that contains road description, use MQTT_TOPIC_ROAD if args not set")
 	displayCameraFlags.BoolVar(&withRoad, "with-road", false, "Display detected road")
+
+	displayCameraFlags.StringVar(&throttleFeedbackTopic, "mqtt-topic-throttle-feedback", os.Getenv("MQTT_TOPIC_THROTTLE_FEEDBACK"), "Mqtt topic where to publish throttle feedback, use MQTT_TOPIC_THROTTLE_FEEDBACK if args not set")
+	displayCameraFlags.BoolVar(&withThrottleFeedback, "with-throttle-feedback", false, "Display throttle feedback")
 
 	recordFlags := flag.NewFlagSet("record", flag.ExitOnError)
 	cli.InitMqttFlagSet(recordFlags, DefaultClientId, &mqttBroker, &username, &password, &clientId, &mqttQos, &mqttRetain)
@@ -195,7 +198,7 @@ func main() {
 				zap.S().Fatalf("unable to connect to mqtt bus: %v", err)
 			}
 			defer client.Disconnect(50)
-			runDisplay(client, framePath, frameTopic, fps, objectsTopic, roadTopic, withObjects, withRoad)
+			runDisplay(client, framePath, frameTopic, fps, objectsTopic, roadTopic, throttleFeedbackTopic, withObjects, withRoad, withThrottleFeedback)
 		default:
 			displayFlags.PrintDefaults()
 			os.Exit(0)
@@ -325,7 +328,8 @@ func runDisplayRecord(client mqtt.Client, recordTopic string) {
 		zap.S().Fatalf("unable to start service: %v", err)
 	}
 }
-func runDisplay(client mqtt.Client, framePath string, frameTopic string, fps int, objectsTopic string, roadTopic string, withObjects bool, withRoad bool) {
+func runDisplay(client mqtt.Client, framePath string, frameTopic string, fps int, objectsTopic, roadTopic, throttleFeedbackTopic string,
+	withObjects, withRoad, withThrottleFeedback bool) {
 
 	if framePath != "" {
 		camera, err := video.NewCameraFake(client, frameTopic, framePath, fps)
@@ -339,8 +343,8 @@ func runDisplay(client mqtt.Client, framePath string, frameTopic string, fps int
 	}
 
 	p := part.NewPart(client, frameTopic,
-		objectsTopic, roadTopic,
-		withObjects, withRoad)
+		objectsTopic, roadTopic, throttleFeedbackTopic,
+		withObjects, withRoad, withThrottleFeedback)
 	defer p.Stop()
 
 	cli.HandleExit(p)

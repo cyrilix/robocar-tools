@@ -14,35 +14,41 @@ import (
 	"time"
 )
 
-func NewPart(client mqtt.Client, frameTopic, objectsTopic, roadTopic string, withObjects, withRoad bool) *FramePart {
+func NewPart(client mqtt.Client, frameTopic, objectsTopic, roadTopic, throttleFeedbackTopic string,
+	withObjects, withRoad, withThrottleFeedback bool) *FramePart {
 	return &FramePart{
-		client:       client,
-		frameTopic:   frameTopic,
-		objectsTopic: objectsTopic,
-		roadTopic:    roadTopic,
-		window:       gocv.NewWindow("frameTopic"),
-		withObjects:  withObjects,
-		withRoad:     withRoad,
-		imgChan:      make(chan gocv.Mat),
-		objectsChan:  make(chan events.ObjectsMessage),
-		roadChan:     make(chan events.RoadMessage),
-		cancel:       make(chan interface{}),
+		client:                client,
+		frameTopic:            frameTopic,
+		objectsTopic:          objectsTopic,
+		roadTopic:             roadTopic,
+		throttleFeedbackTopic: throttleFeedbackTopic,
+		window:                gocv.NewWindow("frameTopic"),
+		withObjects:           withObjects,
+		withRoad:              withRoad,
+		withThrottleFeedback:  withThrottleFeedback,
+		imgChan:               make(chan gocv.Mat),
+		objectsChan:           make(chan events.ObjectsMessage),
+		roadChan:              make(chan events.RoadMessage),
+		throttleFeedbackChan:  make(chan events.ThrottleMessage),
+		cancel:                make(chan interface{}),
 	}
 
 }
 
 type FramePart struct {
-	client                              mqtt.Client
-	frameTopic, objectsTopic, roadTopic string
+	client                                                     mqtt.Client
+	frameTopic, objectsTopic, roadTopic, throttleFeedbackTopic string
 
-	window      *gocv.Window
-	withObjects bool
-	withRoad    bool
+	window               *gocv.Window
+	withObjects          bool
+	withRoad             bool
+	withThrottleFeedback bool
 
-	imgChan     chan gocv.Mat
-	objectsChan chan events.ObjectsMessage
-	roadChan    chan events.RoadMessage
-	cancel      chan interface{}
+	imgChan              chan gocv.Mat
+	objectsChan          chan events.ObjectsMessage
+	roadChan             chan events.RoadMessage
+	throttleFeedbackChan chan events.ThrottleMessage
+	cancel               chan interface{}
 }
 
 func (p *FramePart) Start() error {
@@ -53,6 +59,8 @@ func (p *FramePart) Start() error {
 	var img = gocv.NewMat()
 	var objectsMsg events.ObjectsMessage
 	var roadMsg events.RoadMessage
+	var throttleFeedbackMsg events.ThrottleMessage
+
 	ticker := time.NewTicker(1 * time.Second)
 	for {
 		select {
@@ -65,11 +73,13 @@ func (p *FramePart) Start() error {
 			objectsMsg = objects
 		case road := <-p.roadChan:
 			roadMsg = road
+		case throttleFeedback := <-p.throttleFeedbackChan:
+			throttleFeedbackMsg = throttleFeedback
 		case <-p.cancel:
 			img.Close()
 			return nil
 		}
-		p.drawFrame(&img, &objectsMsg, &roadMsg)
+		p.drawFrame(&img, &objectsMsg, &roadMsg, &throttleFeedbackMsg)
 		ticker.Reset(1 * time.Second)
 	}
 }
@@ -125,6 +135,18 @@ func (p *FramePart) onRoad(_ mqtt.Client, message mqtt.Message) {
 	p.roadChan <- msg
 }
 
+func (p *FramePart) onThrottleFeedback(_ mqtt.Client, message mqtt.Message) {
+	var msg events.ThrottleMessage
+
+	err := proto.Unmarshal(message.Payload(), &msg)
+	if err != nil {
+		zap.S().Errorf("unable to unmarshal msg %T: %v", msg, err)
+		return
+	}
+
+	p.throttleFeedbackChan <- msg
+}
+
 func (p *FramePart) registerCallbacks() error {
 	err := RegisterCallback(p.client, p.frameTopic, p.onFrame)
 	if err != nil {
@@ -144,16 +166,25 @@ func (p *FramePart) registerCallbacks() error {
 			return err
 		}
 	}
+	if p.withThrottleFeedback {
+		err := service.RegisterCallback(p.client, p.throttleFeedbackTopic, p.onThrottleFeedback)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
-func (p *FramePart) drawFrame(img *gocv.Mat, objects *events.ObjectsMessage, road *events.RoadMessage) {
+func (p *FramePart) drawFrame(img *gocv.Mat, objects *events.ObjectsMessage, road *events.RoadMessage, tf *events.ThrottleMessage) {
 
 	if p.withObjects {
 		p.drawObjects(img, objects)
 	}
 	if p.withRoad {
 		p.drawRoad(img, road)
+	}
+	if p.withThrottleFeedback {
+		p.drawThrottleFeedbackText(img, tf)
 	}
 
 	p.window.IMShow(*img)
@@ -212,6 +243,18 @@ func (p *FramePart) drawRoadText(img *gocv.Mat, road *events.RoadMessage) {
 		gocv.FontHersheyPlain,
 		1.,
 		color.RGBA{R: 0, G: 255, B: 0, A: 255},
+		1,
+	)
+}
+
+func (p *FramePart) drawThrottleFeedbackText(img *gocv.Mat, tf *events.ThrottleMessage) {
+	gocv.PutText(
+		img,
+		fmt.Sprintf("Throttle feedback: %.3f", tf.Throttle),
+		image.Point{X: 5, Y: 20},
+		gocv.FontHersheyPlain,
+		0.6,
+		color.RGBA{R: 0, G: 255, B: 255, A: 255},
 		1,
 	)
 }
